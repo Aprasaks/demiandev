@@ -47,20 +47,23 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
         <header className="relative flex items-center justify-between h-16 px-16">
           <nav className="flex space-x-6">
-            <Link href="/posts" className="hover:underline">Posts</Link>
-            <Link href="/projects" className="hover:underline">Projects</Link>
-            <Link href="/error" className="hover:underline">Error</Link>
-            <Link href="/search" className="hover:underline">Search</Link>
+            <Link href="/posts" className="hover:underline ">Posts</Link>
+            <Link href="/projects" className="hover:underline ">Projects</Link>
+            <Link href="/error" className="hover:underline ">Error</Link>
+            <Link href="/search" className="hover:underline ">Search</Link>
             {session && (
-              <Link href="/simple" className="hover:underline">
+              <Link href="/simple" className="hover:underline ">
                 Write
               </Link>
             )}
           </nav>
 
-          <div className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-title">
-            DEMIAN
-          </div>
+          <Link
+          href="/"
+          className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-aggro hover:opacity-80 transition-opacity"
+         >
+           DEMIAN
+         </Link>
 
           <div className="flex items-center space-x-4">
           

@@ -9,6 +9,9 @@ module.exports = {
     extend: {
       fontFamily: {
         cafe: ["Cafe24Ohsquare"],
+        aggro: ["SBAggroB"],
+        jamsil: ["TheJamsil5Bold"],
+        hs: ["HS-Regular"],
       },
     },
   },

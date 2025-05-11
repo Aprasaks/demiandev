@@ -1,27 +1,61 @@
+// app/page.jsx
 "use client";
 
-export default function Home() {
-  return (
-    <main className="h-screen">
-      <section className="flex h-full items-center justify-center px-8">
-        <div className="flex flex-col items-center justify-center text-center w-full max-w-5xl">
-          
-          {/* 이 wrapper에 높이만큼 위로 이동 */}
-          <div className="relative -top-8 space-y-2">
-            <h1 className="text-sm text-gray-700 dark:text-gray-400 font-bold">
-              공부가 힘드신가요?
-            </h1>
-            <h1 className="text-3xl text-gray-900 dark:text-gray-200 font-bold">
-              걱정하지 마세요.
-            </h1>
-          </div>
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-          {/* 서브 텍스트는 그대로 중앙 */}
-          <p className="mt-8 text-5xl font-cafe text-gray-900 dark:text-white">
-            오늘의 한걸음은 내일의 그림자가 되어줄 테니까요.
-          </p>
-        </div>
-      </section>
+export default function Home() {
+  const [answered, setAnswered] = useState(false);
+
+  return (
+    <main className="
+      h-screen flex 
+      items-center justify-center 
+      bg-white text-black 
+      dark:bg-black dark:text-white
+    ">
+      {/* 내부 래퍼: flex 컬럼으로 가로/세로 중앙 */}
+      <div className="flex flex-col items-center justify-center w-full h-full px-4 text-center">
+        {/* 1) 질문 화면 */}
+        {!answered && (
+          <motion.h1
+            className="text-6xl font-aggro cursor-pointer select-none 
+                       text-black dark:text-white"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            onClick={() => setAnswered(true)}
+          >
+            공부가 힘드신가요?
+          </motion.h1>
+        )}
+
+        <AnimatePresence>
+          {/* 2) 결과 화면 */}
+          {answered && (
+            <motion.div
+              key="result"
+              className="mt-4" // 질문과 결과 사이 간격
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.p
+                className="text-6xl font-aggro 
+                           text-black dark:text-white"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                어제보다 오늘 더 나아지고 있어요.
+              </motion.p>
+
+              
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </main>
   );
 }

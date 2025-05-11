@@ -14,7 +14,51 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'SBAggroB';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/SBAggroB.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'TheJamsil5Bold';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil5Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'HS-Regular';
+  src: url('https://gcore.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/HS-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+/* globals.css 등에 추가 */
+.brick {
+  width: 6rem;            /* 벽돌 가로 크기 */
+  height: 2rem;           /* 벽돌 세로 크기 */
+  background-color: #c04b31;
+  border: 2px solid #9a3c29;
+  border-radius: 2px;
+}
+.brick-stack {
+  display: grid;
+  grid-auto-flow: row;     /* 행 방향으로 채우되 */
+  grid-auto-rows: 2rem;    /* 각 행 높이 고정 */
+  justify-items: center;   /* 가운데 정렬 */
+  align-content: end;      /* 전체 콘텐츠를 바닥에 붙여 채움 */
+}

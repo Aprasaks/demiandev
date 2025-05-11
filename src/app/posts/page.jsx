@@ -1,59 +1,68 @@
 // src/app/posts/page.jsx
-import { createClient } from '@supabase/supabase-js'
-import Link from 'next/link'
+"use client";
 
-// 서버 컴포넌트로 async/await 사용
-export default async function PostsPage() {
-  // 1) Supabase 클라이언트 초기화
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-  // 2) 이제 title 컬럼을 select 에 포함시킵니다.
-  const { data: posts, error } = await supabase
-    .from('posts')
-    .select('id, title')            // ← title 포함
-    .order('created_at', { ascending: false })
+export default function PostsPage() {
+  const [todayCount, setTodayCount] = useState(null);
+  const [totalCount, setTotalCount] = useState(null);
 
-  // 3) 에러 처리
-  if (error) {
-    console.error('Supabase fetch error ▶', error)
-    return (
-      <main className="p-8">
-        <p className="text-red-500">
-          글 목록을 불러오는 데 실패했습니다: {error.message}
-        </p>
-      </main>
-    )
-  }
+  useEffect(() => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
 
-  // 4) 데이터가 없으면 메시지
-  if (!posts || posts.length === 0) {
-    return (
-      <main className="p-8">
-        <h1 className="text-2xl font-bold mb-4">글 목록</h1>
-        <p>아직 작성된 글이 없습니다.</p>
-      </main>
-    )
-  }
+    async function fetchCounts() {
+      // 1) 전체 포스트 개수
+      const { count: total, error: errTotal } = await supabase
+        .from("posts")
+        .select("id", { count: "exact", head: true });
+      if (!errTotal) {
+        setTotalCount(total);
+      }
 
-  // 5) 정상 렌더: title 로 표시
+      // 2) 오늘 포스트 개수
+      const now = new Date();
+      const startOfDay = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      ).toISOString();
+      const startOfTomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      ).toISOString();
+
+      const { count: postsToday, error: errToday } = await supabase
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", startOfDay)
+        .lt("created_at", startOfTomorrow);
+      if (!errToday) {
+        setTodayCount(postsToday);
+      }
+    }
+
+    fetchCounts();
+  }, []);
+
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold mb-4">글 목록</h1>
-      <ul className="space-y-2">
-        {posts.map((post) => (
-          <li key={post.id}>
-            <Link
-              href={`/posts/${post.id}`}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              {post.title || '(제목 없음)'}
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <main className="relative h-screen bg-white dark:bg-black text-black dark:text-white">
+      {/* 우측 상단 통계 박스 */}
+      <div className="flex flex-col text-sm text-gray-800 dark:text-gray-200 font-medium leading-snug">
+    <span>오늘의 포스팅: <span className="font-semibold">{todayCount}</span></span>
+    <span>전체 포스팅: <span className="font-semibold">{totalCount}</span></span>
+  </div>
+
+      {/* 여기에 원하시는 다른 컨텐츠를 넣으세요 */}
+      <div className="flex items-center justify-center h-full">
+        <p className="text-xl text-gray-500 dark:text-gray-400">
+          포스팅 목록 대신 오늘/전체 포스팅 수를 보여줍니다.
+        </p>
+      </div>
     </main>
-  )
+  );
 }
