@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# DEMIAN Blog
 
-## Getting Started
+Next.js 15, Tailwind CSS, Supabase, 그리고 Tiptap을 이용해 만들었다. 
+아무런 외부 라이브러리 없이 순수 React 컴포넌트와 Supabase만으로 구현한 “스크래치”형 블로그 구조이다.
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+##  주요 기능
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **글 작성 & 관리**  
+  - `/simple` 경로에서 Rich-text 에디터(Tiptap)를 활용해 글을 작성  
+  - Supabase `posts` 테이블에 HTML 콘텐츠 저장  
+  - `/posts` 페이지에서 작성된 글 목록(제목/날짜) 자동 조회  
+  - 개별 글 보기(`/posts/[id]`) 지원  
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **인증 & 권한**  
+  - Supabase Auth를 활용한 관리자 로그인  
+  - 로그인한 관리자만 글 작성(Write) 메뉴 표시 및 접근 가능  
+  - 로그인/로그아웃 토글과 모달형 로그인 UI  
 
-## Learn More
+- **다크/라이트 모드**  
+  - 전역 토글 버튼으로 다크↔라이트 모드 전환  
+  - Tiptap 툴바 안에서도 에디터 전용 다크 모드 버튼 제공  
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏗️ 기술 스택
 
-## Deploy on Vercel
+| 역할         | 라이브러리 / 툴                                |
+|--------------|----------------------------------------------|
+| Frontend     | Next.js 15 (App Router), React 18            |
+| Styling      | Tailwind CSS, SCSS                           |
+| Rich-text    | Tiptap (StarterKit, 코드블록, 이미지 업로드 등) |
+| Auth & DB    | Supabase (Auth, Postgres, Storage)           |
+| 배포         | Vercel (or Netlify)                          |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
