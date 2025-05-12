@@ -2,6 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PostViewer from "@/components/PostViewer";
+import EditButton from "@/components/EditButton"; // 클라이언트 전용 컴포넌트
 
 export default async function PostPage({ params }) {
   const supabase = createClient(
@@ -35,13 +36,8 @@ export default async function PostPage({ params }) {
         px-8 py-12 relative
       "
     >
-      {/* 1) 수정 버튼 (오른쪽 상단) */}
-      <Link
-        href={`/simple?edit=${params.id}`}
-        className="absolute top-8 right-8 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition"
-      >
-        수정
-      </Link>
+      {/* 1) 로그인된 관리자만 보이는 수정 버튼 */}
+      <EditButton postId={params.id} />
 
       {/* 2) 제목 */}
       {post.title && (
