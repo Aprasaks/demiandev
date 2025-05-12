@@ -1,44 +1,84 @@
-// src/app/simple/page.jsx  (혹은 SimplePage 컴포넌트 위치)
-"use client";
-import React, { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+"use client"
+
+import React, { useRef, useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 
 export default function SimplePage() {
-  const router = useRouter();
-  const editorRef = useRef(null);
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get("edit")  // ?edit=ID 읽기
 
-  // 1) 제목
-  const [title, setTitle] = useState("");
-  // 2) 카테고리
-  const [category, setCategory] = useState("html");
+  const editorRef = useRef(null)
+
+  // 제목, 카테고리, 초기 콘텐츠 상태
+  const [title, setTitle] = useState("")
+  const [category, setCategory] = useState("html")
+  const [initialContent, setInitialContent] = useState("<p></p>")
+  const [loading, setLoading] = useState(!!editId)
+
+  // 1) 편집 모드라면 기존 글 불러오기
+  useEffect(() => {
+    if (!editId) {
+      setLoading(false)
+      return
+    }
+    supabase
+      .from("posts")
+      .select("title, content, category")
+      .eq("id", editId)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("불러오기 실패:", error)
+          alert("글 불러오기에 실패했습니다.")
+          router.push("/posts")
+        } else {
+          setTitle(data.title)
+          setCategory(data.category)
+          setInitialContent(data.content)
+        }
+      })
+      .finally(() => setLoading(false))
+  }, [editId])
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert("제목을 입력해주세요.");
-      return;
+      alert("제목을 입력해주세요.")
+      return
     }
-    const html = editorRef.current?.getHTML() || "";
+    const html = editorRef.current?.getHTML() || ""
 
-    // 3) category도 함께 insert
-    const { error } = await supabase.from("posts").insert({
-      title,
-      content: html,
-      category,
-    });
-
-    if (error) {
-      console.error(error);
-      alert("저장에 실패했습니다.");
+    let result
+    if (editId) {
+      // 업데이트
+      result = await supabase
+        .from("posts")
+        .update({ title, content: html, category })
+        .eq("id", editId)
     } else {
-      router.push("/posts");
+      // 새 글 삽입
+      result = await supabase
+        .from("posts")
+        .insert({ title, content: html, category })
     }
-  };
+
+    if (result.error) {
+      console.error("저장 실패:", result.error)
+      alert("저장에 실패했습니다.")
+    } else {
+      router.push("/posts")
+    }
+  }
+
+  if (loading) {
+    return <p className="p-8 text-center">불러오는 중...</p>
+  }
 
   return (
     <div className="p-8 bg-white dark:bg-black min-h-screen space-y-4">
-      {/* 제목 */}
+      {/* 제목 입력 */}
       <input
         type="text"
         value={title}
@@ -47,7 +87,7 @@ export default function SimplePage() {
         className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-900 dark:border-gray-700"
       />
 
-      {/* 카테고리 */}
+      {/* 카테고리 선택 */}
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
@@ -60,8 +100,12 @@ export default function SimplePage() {
         <option value="node">Node</option>
       </select>
 
-      {/* 에디터 + 저장 */}
-      <SimpleEditor ref={editorRef} onSave={handleSave} />
+      {/* 에디터에 초기 콘텐츠 전달 */}
+      <SimpleEditor
+        ref={editorRef}
+        onSave={handleSave}
+        initialContent={initialContent}
+      />
     </div>
-  );
+  )
 }

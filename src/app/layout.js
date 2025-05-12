@@ -44,7 +44,7 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="ko" className={isDark ? "dark" : ""}>
-      <body className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
+      <body className="min-h-screen bg-white text-black dark:bg-black dark:text-white overflow-auto ">
         <header className="relative flex items-center justify-between h-16 px-16">
           <nav className="flex space-x-6">
             <Link href="/posts" className="hover:underline ">Posts</Link>

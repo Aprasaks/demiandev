@@ -14,9 +14,9 @@ import { TaskList } from "@tiptap/extension-task-list"
 import { TextAlign } from "@tiptap/extension-text-align"
 import { Typography } from "@tiptap/extension-typography"
 import { Highlight } from "@tiptap/extension-highlight"
-import { Subscript } from "@tiptap/extension-subscript"
-import { Superscript } from "@tiptap/extension-superscript"
 import { Underline } from "@tiptap/extension-underline"
+import { Superscript } from "@tiptap/extension-superscript"
+import { Subscript } from "@tiptap/extension-subscript"
 
 // --- Custom Extensions ---
 import { Link } from "@/components/tiptap-extension/link-extension"
@@ -65,23 +65,19 @@ import { useMobile } from "@/hooks/use-mobile"
 import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
-// --- Components ---
-// import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
+// --- Utilities ---
+import { MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+import { uploadImageToStorage } from "@/lib/supabaseStorage"
 
-// --- Lib & Styles ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+// --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
-// ----------------------------------------------------------------
-// NOTE: this is plain JS—no TS syntax here!
-// ----------------------------------------------------------------
-export const SimpleEditor = forwardRef(({ onSave }, ref) => {
+export const SimpleEditor = forwardRef(({ onSave, initialContent = "<p></p>" }, ref) => {
   const isMobile = useMobile()
   const windowSize = useWindowSize()
   const toolbarRef = useRef(null)
   const [mobileView, setMobileView] = useState("main")
 
-  // 1) initialize editor
   const editor = useEditor({
     editorProps: {
       attributes: {
@@ -105,47 +101,51 @@ export const SimpleEditor = forwardRef(({ onSave }, ref) => {
       Subscript,
       Selection,
       ImageUploadNode.configure({
+        upload: uploadImageToStorage,
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
         limit: 3,
-        upload: handleImageUpload,
-        onError: (error) => console.error("Upload failed:", error),
+        onError: (err) => console.error("Image upload error:", err),
       }),
       TrailingNode,
       Link.configure({ openOnClick: false }),
     ],
-    content: "<p></p>",
+    content: initialContent,
   })
 
-  // 2) expose getHTML() to parent via ref
   useImperativeHandle(ref, () => ({
     getHTML: () => editor?.getHTML() ?? "",
+    setContent: (html) => editor?.commands.setContent(html),
   }), [editor])
 
-  // 3) keep toolbar above cursor
+  // sync initial content
+  useEffect(() => {
+    if (editor && initialContent) {
+      editor.commands.setContent(initialContent)
+    }
+  }, [editor, initialContent])
+
+  // toolbar cursor tracking
   const bodyRect = useCursorVisibility({
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
   })
 
-  // 4) mobile view reset
+  // reset mobile view
   useEffect(() => {
     if (!isMobile && mobileView !== "main") {
       setMobileView("main")
     }
   }, [isMobile, mobileView])
 
-  // 5) toolbar contents
-  const MainToolbarContent = ({ onHighlighterClick, onLinkClick }) => (
+  const MainToolbar = ({ onHighlighterClick, onLinkClick }) => (
     <>
       <Spacer />
-
       <ToolbarGroup>
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
       </ToolbarGroup>
       <ToolbarSeparator />
-
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1,2,3,4]} />
         <ListDropdownMenu types={["bulletList","orderedList","taskList"]} />
@@ -153,7 +153,6 @@ export const SimpleEditor = forwardRef(({ onSave }, ref) => {
         <CodeBlockButton />
       </ToolbarGroup>
       <ToolbarSeparator />
-
       <ToolbarGroup>
         <MarkButton type="bold" />
         <MarkButton type="italic" />
@@ -170,13 +169,11 @@ export const SimpleEditor = forwardRef(({ onSave }, ref) => {
         }
       </ToolbarGroup>
       <ToolbarSeparator />
-
       <ToolbarGroup>
         <MarkButton type="superscript" />
         <MarkButton type="subscript" />
       </ToolbarGroup>
       <ToolbarSeparator />
-
       <ToolbarGroup>
         <TextAlignButton align="left" />
         <TextAlignButton align="center" />
@@ -184,45 +181,30 @@ export const SimpleEditor = forwardRef(({ onSave }, ref) => {
         <TextAlignButton align="justify" />
       </ToolbarGroup>
       <ToolbarSeparator />
-
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
       <Spacer />
-
       {isMobile && <ToolbarSeparator />}
-
       <ToolbarGroup>
-        {/* <ThemeToggle /> */}
-        {onSave && (
-          <Button data-style="primary" onClick={onSave}>
-            저장
-          </Button>
-        )}
+        {onSave && <Button data-style="primary" onClick={onSave}>저장</Button>}
       </ToolbarGroup>
     </>
   )
 
-  const MobileToolbarContent = ({ type, onBack }) => (
+  const MobileToolbar = ({ type, onBack }) => (
     <>
       <ToolbarGroup>
         <Button data-style="ghost" onClick={onBack}>
           <ArrowLeftIcon className="tiptap-button-icon" />
-          {type === "highlighter"
-            ? <HighlighterIcon className="tiptap-button-icon" />
-            : <LinkIcon className="tiptap-button-icon" />
-          }
+          { type === "highlighter" ? <HighlighterIcon className="tiptap-button-icon" /> : <LinkIcon className="tiptap-button-icon" /> }
         </Button>
       </ToolbarGroup>
       <ToolbarSeparator />
-      {type === "highlighter"
-        ? <ColorHighlightPopoverContent />
-        : <LinkContent />
-      }
+      { type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent /> }
     </>
   )
 
-  // 6) render final editor + toolbar
   return (
     <EditorContext.Provider value={{ editor }}>
       <Toolbar
@@ -230,14 +212,8 @@ export const SimpleEditor = forwardRef(({ onSave }, ref) => {
         style={isMobile ? { bottom: `calc(100% - ${windowSize.height - bodyRect.y}px)` } : {}}
       >
         {mobileView === "main"
-          ? <MainToolbarContent
-              onHighlighterClick={() => setMobileView("highlighter")}
-              onLinkClick={() => setMobileView("link")}
-            />
-          : <MobileToolbarContent
-              type={mobileView === "highlighter" ? "highlighter" : "link"}
-              onBack={() => setMobileView("main")}
-            />
+          ? <MainToolbar onHighlighterClick={() => setMobileView("highlighter")} onLinkClick={() => setMobileView("link")} />
+          : <MobileToolbar type={mobileView} onBack={() => setMobileView("main")} />
         }
       </Toolbar>
 

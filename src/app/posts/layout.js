@@ -1,13 +1,12 @@
 // src/app/posts/layout.js
-import React from "react"
-import Link from "next/link"
+import Link from "next/link";
 
 export const metadata = {
   title: "Posts",
-}
+};
 
 export default function PostsLayout({ children }) {
-  const categories = ["HTML", "CSS", "JavaScript", "React", "Node"]
+  const categories = ["HTML", "CSS", "JavaScript", "React", "Node"];
 
   return (
     <section>
@@ -27,8 +26,8 @@ export default function PostsLayout({ children }) {
         </ul>
       </nav>
 
-      {/* 2) 이 부분이 /posts/page.jsx 또는 /posts/[id]/page.jsx 렌더링 위치 */}
+      {/* 2) 이 자리에 page.jsx 가 렌더링됩니다 */}
       <div>{children}</div>
     </section>
-  )
+  );
 }

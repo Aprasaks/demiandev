@@ -75,20 +75,40 @@ function usePopover({
     useRole(floating.context),
   ])
 
-  const updatePosition = React.useCallback((
-    newSide,
-    newAlign,
-    newSideOffset,
-    newAlignOffset
-  ) => {
-    setCurrentPlacement(`${newSide}-${newAlign}`)
-    if (newSideOffset !== undefined || newAlignOffset !== undefined) {
-      setOffsets({
-        sideOffset: newSideOffset ?? offsets.sideOffset,
-        alignOffset: newAlignOffset ?? offsets.alignOffset,
-      })
-    }
-  }, [offsets.sideOffset, offsets.alignOffset])
+  const updatePosition = React.useCallback(
+    (newSide, newAlign, newSideOffset, newAlignOffset) => {
+      const nextPlacement = `${newSide}-${newAlign}`;
+      // placement가 바뀔 때만 업데이트
+      if (nextPlacement !== currentPlacement) {
+        setCurrentPlacement(nextPlacement);
+      }
+
+      // offsets가 실제로 바뀌었을 때만 업데이트
+      setOffsets((prev) => {
+        const updated = { ...prev };
+        let changed = false;
+
+        if (
+          newSideOffset !== undefined &&
+          newSideOffset !== prev.sideOffset
+        ) {
+          updated.sideOffset = newSideOffset;
+          changed = true;
+        }
+        if (
+          newAlignOffset !== undefined &&
+          newAlignOffset !== prev.alignOffset
+        ) {
+          updated.alignOffset = newAlignOffset;
+          changed = true;
+        }
+
+        return changed ? updated : prev;
+      });
+    },
+    [currentPlacement], // offsets 빼고 placement만 의존
+  );
+
 
   return React.useMemo(() => ({
     open,

@@ -3,66 +3,92 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useSearchParams } from "next/navigation";
+import {
+  VerticalTimeline,
+  VerticalTimelineElement,
+} from "react-vertical-timeline-component";
+import "react-vertical-timeline-component/style.min.css";
 
-export default function PostsPage() {
-  const [todayCount, setTodayCount] = useState(null);
-  const [totalCount, setTotalCount] = useState(null);
+// 여기에 사용할 아이콘 라이브러리를 임포트
+import { FaHtml5, FaCss3Alt, FaJs, FaReact, FaNodeJs } from "react-icons/fa";
+
+export default function PostsTimeline() {
+  const [posts, setPosts] = useState([]);
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 
   useEffect(() => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
-
-    async function fetchCounts() {
-      // 1) 전체 포스트 개수
-      const { count: total, error: errTotal } = await supabase
+    async function load() {
+      let query = supabase
         .from("posts")
-        .select("id", { count: "exact", head: true });
-      if (!errTotal) {
-        setTotalCount(total);
-      }
-
-      // 2) 오늘 포스트 개수
-      const now = new Date();
-      const startOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      ).toISOString();
-      const startOfTomorrow = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1
-      ).toISOString();
-
-      const { count: postsToday, error: errToday } = await supabase
-        .from("posts")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", startOfDay)
-        .lt("created_at", startOfTomorrow);
-      if (!errToday) {
-        setTodayCount(postsToday);
-      }
+        .select("id, title, created_at, category")
+        .order("created_at", { ascending: false });
+      if (category) query = query.eq("category", category);
+      const { data, error } = await query;
+      if (!error) setPosts(data);
     }
+    load();
+  }, [category]);
 
-    fetchCounts();
-  }, []);
+  // 카테고리별 아이콘 매핑
+  const iconMap = {
+    html: <FaHtml5 />,
+    css: <FaCss3Alt />,
+    javascript: <FaJs />,
+    react: <FaReact />,
+    node: <FaNodeJs />,
+  };
 
   return (
-    <main className="relative h-screen bg-white dark:bg-black text-black dark:text-white">
-      {/* 우측 상단 통계 박스 */}
-      <div className="flex flex-col text-sm text-gray-800 dark:text-gray-200 font-medium leading-snug">
-    <span>오늘의 포스팅: <span className="font-semibold">{todayCount}</span></span>
-    <span>전체 포스팅: <span className="font-semibold">{totalCount}</span></span>
-  </div>
+    <main className="h-screen overflow-auto bg-white dark:bg-black px-4 py-8">
+      <h1 className="text-center text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
+        포스트 타임라인
+      </h1>
+      <VerticalTimeline lineColor="#4A5568">
+        {posts.map((post, idx) => {
+          const pos = idx % 2 === 0 ? "left" : "right"; // 좌/우 교차
+          const icon = iconMap[post.category] || <FaJs />;
 
-      {/* 여기에 원하시는 다른 컨텐츠를 넣으세요 */}
-      <div className="flex items-center justify-center h-full">
-        <p className="text-xl text-gray-500 dark:text-gray-400">
-          포스팅 목록 대신 오늘/전체 포스팅 수를 보여줍니다.
-        </p>
-      </div>
+          return (
+            <VerticalTimelineElement
+              key={post.id}
+              date={new Date(post.created_at).toLocaleDateString()}
+              position={pos}
+              iconStyle={{
+                background: "#2D3748",
+                color: "#FFF",
+                boxShadow: "0 0 0 4px rgba(45,55,72,0.5)",
+              }}
+              icon={icon}
+              contentStyle={{
+                background: "#1A202C",
+              color: "#E2E8F0",
+              borderRadius: "8px",
+              padding: "16px",
+              cursor: "pointer",
+              }}
+              contentArrowStyle={{ borderRight: "8px solid #1A202C" }}
+              className={`vertical-timeline-element--${post.category}`}
+              onTimelineElementClick={() => {
+                window.location.href = `/posts/${post.id}`;
+              }}
+            >
+              <h3 className="text-2xl font-semibold mb-2 text-white">
+                {post.title || "(제목 없음)"}
+              </h3>
+              <p className="text-sm text-gray-400">
+                {new Date(post.created_at).toLocaleTimeString()}
+              </p>
+            </VerticalTimelineElement>
+          );
+        })}
+      </VerticalTimeline>
     </main>
   );
 }
