@@ -146,35 +146,45 @@ function Popover({
   );
 }
 
-const PopoverTrigger = React.forwardRef(
-  function PopoverTrigger({ children, asChild = false, ...props }, propRef) {
-    const context = usePopoverContext()
-    const childrenRef = React.isValidElement(children)
-      ? parseInt(React.version, 10) >= 19
-        ? (children.props).ref
-        : (children).ref
-      : undefined
-    const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef])
+const PopoverTrigger = React.forwardRef(function PopoverTrigger(
+  { children, asChild = false, ...props },
+  propRef
+) {
+  const context = usePopoverContext();
 
-    if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(children, context.getReferenceProps({
-        ref,
-        ...props,
-        ...(children.props),
-        "data-state": context.open ? "open" : "closed",
-      }));
+  // 👉 children.ref 가 문자열이 아닌 경우만 병합
+  let childrenRef;
+  if (React.isValidElement(children)) {
+    const ref = children.ref;
+    if (typeof ref !== "string") {
+      childrenRef = ref;
     }
-
-    return (
-      <button
-        ref={ref}
-        data-state={context.open ? "open" : "closed"}
-        {...context.getReferenceProps(props)}>
-        {children}
-      </button>
-    );
   }
-)
+
+  // 👉 모든 ref 병합
+  const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
+
+  // 👉 children이 React 엘리먼트라면 클론, 아니면 버튼
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      ref,
+      ...props,
+      ...children.props,
+      "data-state": context.open ? "open" : "closed",
+      ...context.getReferenceProps(),
+    });
+  }
+
+  return (
+    <button
+      ref={ref}
+      data-state={context.open ? "open" : "closed"}
+      {...context.getReferenceProps(props)}
+    >
+      {children}
+    </button>
+  );
+});
 
 const PopoverContent = React.forwardRef(function PopoverContent(
   {
@@ -192,19 +202,30 @@ const PopoverContent = React.forwardRef(function PopoverContent(
   },
   propRef
 ) {
-  const context = usePopoverContext()
-  const childrenRef = React.isValidElement(children)
-    ? parseInt(React.version, 10) >= 19
-      ? (children.props).ref
-      : (children).ref
-    : undefined
-  const ref = useMergeRefs([context.refs.setFloating, propRef, childrenRef])
+  const context = usePopoverContext();
 
+  // 💡 children.ref 안전하게 추출
+  let childrenRef;
+  if (React.isValidElement(children)) {
+    const ref = children.ref;
+    if (typeof ref !== "string") {
+      childrenRef = ref;
+    }
+  }
+
+  const ref = useMergeRefs([
+    context?.refs?.setFloating,
+    propRef,
+    childrenRef,
+  ]);
+
+  // 💣 context 또는 open 상태 체크
+  if (!context || !context.context?.open) return null;
+
+  // 💡 위치 업데이트
   React.useEffect(() => {
-    context.updatePosition(side, align, sideOffset, alignOffset)
-  }, [context, side, align, sideOffset, alignOffset])
-
-  if (!context.context.open) return null
+    context.updatePosition(side, align, sideOffset, alignOffset);
+  }, [context, side, align, sideOffset, alignOffset]);
 
   const contentProps = {
     ref,
@@ -221,30 +242,25 @@ const PopoverContent = React.forwardRef(function PopoverContent(
     "data-align": align,
     "data-state": context.context.open ? "open" : "closed",
     ...context.getFloatingProps(props),
-  }
+  };
 
-  const content =
-    asChild && React.isValidElement(children) ? (
-      React.cloneElement(children, {
+  const content = asChild && React.isValidElement(children)
+    ? React.cloneElement(children, {
         ...contentProps,
-        ...(children.props),
+        ...(children.props || {}),
       })
-    ) : (
-      <div {...contentProps}>{children}</div>
-    )
+    : <div {...contentProps}>{children}</div>;
 
-  const wrappedContent = (
+  const wrapped = (
     <FloatingFocusManager context={context.context} modal={context.modal}>
       {content}
     </FloatingFocusManager>
-  )
+  );
 
-  if (portal) {
-    return <FloatingPortal {...portalProps}>{wrappedContent}</FloatingPortal>;
-  }
-
-  return wrappedContent
-})
+  return portal
+    ? <FloatingPortal {...portalProps}>{wrapped}</FloatingPortal>
+    : wrapped;
+});
 
 PopoverTrigger.displayName = "PopoverTrigger"
 PopoverContent.displayName = "PopoverContent"
