@@ -27,17 +27,23 @@ export default function SimpleEditorWrapper({
     }
     const html = editorRef.current?.getHTML() || ""
 
-    let result
-    if (editId) {
-      result = await supabase
-        .from(table)
-        .update({ title, content: html, category })
-        .eq("id", editId)
-    } else {
-      result = await supabase
-        .from(table)
-        .insert({ title, content: html, category })
-    }
+   // 테이블별로 보낼 필드 결정
+   const payload =
+     table === "posts"
+       ? { title, content: html, category }
+       : { title, content: html };
+
+   let result;
+   if (editId) {
+     result = await supabase
+       .from(table)
+       .update(payload)
+       .eq("id", editId);
+   } else {
+     result = await supabase
+       .from(table)
+       .insert(payload);
+   }
 
     if (result.error) {
       console.error("저장 실패:", result.error)
