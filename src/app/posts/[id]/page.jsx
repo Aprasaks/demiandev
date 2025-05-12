@@ -36,15 +36,15 @@ export default async function PostPage({ params }) {
         px-8 py-12 relative
       "
     >
-      {/* 1) 로그인된 관리자만 보이는 수정 버튼 */}
+      {/* 로그인된 관리자만 보이는 수정 버튼 */}
       <EditButton postId={params.id} />
 
-      {/* 2) 제목 */}
+      {/* 제목 */}
       {post.title && (
         <h1 className="text-4xl font-bold mb-2">{post.title}</h1>
       )}
 
-      {/* 3) 작성일 + 카테고리 */}
+      {/* 작성일 + 카테고리 */}
       <div className="flex items-center space-x-4 mb-8 text-sm text-gray-500 dark:text-gray-400">
         <span>{new Date(post.created_at).toLocaleString()}</span>
         {post.category && (
@@ -54,10 +54,10 @@ export default async function PostPage({ params }) {
         )}
       </div>
 
-      {/* 4) 본문 렌더러 */}
+      {/* 본문 렌더러 */}
       <PostViewer content={post.content || ""} />
 
-      {/* 5) 뒤로가기 */}
+      {/* 뒤로가기 */}
       <div className="mt-12">
         <Link
           href="/posts"
