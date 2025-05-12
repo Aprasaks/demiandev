@@ -39,12 +39,13 @@ export default function PostsPage() {
     load()
   }, [category])
 
+  // ← 여기가 수정된 부분: 타입 주석 제거
   const iconMap = {
-    html: <FaHtml5 />,
-    css: <FaCss3Alt />,
+    html:       <FaHtml5 />,
+    css:        <FaCss3Alt />,
     javascript: <FaJs />,
-    react: <FaReact />,
-    node: <FaNodeJs />,
+    react:      <FaReact />,
+    node:       <FaNodeJs />,
   }
 
   return (
