@@ -21,10 +21,11 @@ export default async function PostsPage({ searchParams }) {
   const { data: posts, error } = await query;
 
   if (error) {
-    // 에러 처리 (원하시는 대로)
     return <p>글 불러오는 중 오류 발생</p>;
   }
 
-  // 클라이언트 컴포넌트에 데이터를 props 로 넘겨준다
-  return <PostsTimeline posts={posts} initialCategory={category} />;
+  return (
+    // 클라이언트 컴포넌트에 필터된 posts 와 현재 category 를 넘겨준다
+    <PostsTimeline posts={posts} initialCategory={category} />
+  );
 }
