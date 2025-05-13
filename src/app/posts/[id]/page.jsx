@@ -62,8 +62,14 @@ if(!post) return<main className= "p-8">Loading...</main>
 
     {/* 작성일 + 카테고리 */}
     <div className="flex items-center space-x-4 mb-8 text-sm text-gray-500 dark:text-gray-400">
-      {/* ... */}
-    </div>
+          <span>{new Date(post.created_at).toLocaleDateString()}</span>
+          {post.category && (
+            <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">
+              {post.category}
+            </span>
+          )}
+        </div>
+
 
     {/* 본문 */}
     <PostViewer content={post.content || ""} />
