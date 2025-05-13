@@ -1,23 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { VerticalTimeline, VerticalTimelineElement } from "react-vertical-timeline-component";
-import "react-vertical-timeline-component/style.min.css";
 import Link from "next/link";
-import { FaHtml5, FaCss3Alt, FaJs, FaReact, FaNodeJs } from "react-icons/fa";
+import {
+  FaHtml5,
+  FaCss3Alt,
+  FaJs,
+  FaReact,
+  FaNodeJs,
+} from "react-icons/fa";
 
-export default function PostsTimeline({ posts }) {
-  // 카테고리 목록 (all 포함)
-  const categories = ["all", "html", "css", "javascript", "react", "node"];
+import "react-vertical-timeline-component/style.min.css";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+export default function PostsTimeline() {
+  const [posts, setPosts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const categories = ["all", "html", "css", "javascript", "react", "node"];
 
-  // 선택된 카테고리에 따른 필터링
+  useEffect(() => {
+    // 초기 데이터 불러오기
+    const fetchPosts = async () => {
+      const { data } = await supabase
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      setPosts(data || []);
+    };
+
+    fetchPosts();
+
+    // 실시간 구독
+    const channel = supabase
+      .channel("realtime-posts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        (payload) => {
+          setPosts((prev) => {
+            if (payload.eventType === "INSERT") {
+              return [payload.new, ...prev];
+            }
+            if (payload.eventType === "DELETE") {
+              return prev.filter((p) => p.id !== payload.old.id);
+            }
+            if (payload.eventType === "UPDATE") {
+              return prev.map((p) => (p.id === payload.new.id ? payload.new : p));
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel); // cleanup
+    };
+  }, []);
+
   const filteredPosts =
     selectedCategory === "all"
       ? posts
       : posts.filter((post) => post.category === selectedCategory);
 
-  // 아이콘 매핑
   const iconMap = {
     html: <FaHtml5 />,
     css: <FaCss3Alt />,
@@ -28,12 +80,6 @@ export default function PostsTimeline({ posts }) {
 
   return (
     <main className="h-screen overflow-auto bg-white dark:bg-black px-4 py-8">
-      {/* <h1 className="text-center text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        {selectedCategory === "all"
-          ? "전체 글 타임라인"
-          : `${selectedCategory.toUpperCase()} 카테고리 글`}        
-      </h1> */}
-
       {/* 카테고리 선택 */}
       <div className="flex justify-center mb-6">
         <select
