@@ -1,4 +1,6 @@
 // src/app/posts/[id]/page.jsx
+"use client"
+
 import{useEffect, useState} from "react";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -6,7 +8,7 @@ import PostViewer from "@/components/PostViewer";
 import InlineActions from "@/components/InlineActions";
 
 export default async function PostPage({ params }) {
-  const [post, setPost] = useState();
+  const [post, setPost] = useState(null);
   const [error, setError] = useState(false);
 
   const supabase = createClient(
