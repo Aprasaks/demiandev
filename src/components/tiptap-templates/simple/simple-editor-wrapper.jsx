@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import React, { useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
-import { SimpleEditor } from "./simple-editor"
+import React, { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import { SimpleEditor } from "./simple-editor";
 
 export default function SimpleEditorWrapper({
   editId,
@@ -11,56 +11,59 @@ export default function SimpleEditorWrapper({
   initialCategory,
   initialContent,
 }) {
-  const router = useRouter()
-  const editorRef = useRef(null)
+  const router = useRouter();
+  const editorRef = useRef(null);
 
-  // 1) 테이블 선택 상태 (posts, projects, error, search)
-  const [table, setTable] = useState("posts")
-  // 2) 프로그래밍 언어 카테고리 (html, css, javascript, react, node)
-  const [category, setCategory] = useState(initialCategory)
-  const [title, setTitle] = useState(initialTitle)
+  // 저장할 테이블 (posts, projects, error 등)
+  const [table, setTable] = useState("posts");
+
+  // posts 전용 카테고리
+  const [category, setCategory] = useState(initialCategory);
+  const [title, setTitle] = useState(initialTitle);
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert("제목을 입력해주세요.")
-      return
+      alert("제목을 입력해주세요.");
+      return;
     }
-    const html = editorRef.current?.getHTML() || ""
 
-   // 테이블별로 보낼 필드 결정
-   const payload =
-     table === "posts"
-       ? { title, content: html, category }
-       : { title, content: html };
+    const html = editorRef.current?.getHTML() || "";
 
-   let result;
-   if (editId) {
-     result = await supabase
-       .from(table)
-       .update(payload)
-       .eq("id", editId);
-   } else {
-     result = await supabase
-       .from(table)
-       .insert(payload);
-   }
+    // posts에는 category 포함, 다른 테이블에는 제외
+    const payload =
+      table === "posts"
+        ? { title, content: html, category }
+        : { title, content: html };
+
+    let result;
+    if (editId) {
+      result = await supabase
+        .from(table)
+        .update(payload)
+        .eq("id", editId);
+    } else {
+      result = await supabase
+        .from(table)
+        .insert(payload);
+    }
 
     if (result.error) {
-      console.error("저장 실패:", result.error)
-      alert("저장에 실패했습니다.")
+      console.error("저장 실패:", result.error);
+      alert("저장에 실패했습니다.");
     } else {
-      router.push(`/${table}`)
+      router.push(`/${table}`);
+      router.refresh(); // ✅ 목록 페이지 강제 새로고침 (즉시 반영)
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
-      {/* 테이블 선택 드롭다운 */}
+      {/* 테이블 선택 */}
       <div className="flex items-center space-x-4">
         <label className="font-medium">저장 위치:</label>
         <select
           value={table}
-          onChange={e => setTable(e.target.value)}
+          onChange={(e) => setTable(e.target.value)}
           className="p-2 border rounded bg-gray-100 dark:bg-gray-900 dark:border-gray-700"
         >
           <option value="posts">Posts</option>
@@ -69,13 +72,13 @@ export default function SimpleEditorWrapper({
           <option value="search">Search</option>
         </select>
 
-        {/* posts 선택 시에만 프로그래밍 언어 카테고리 노출 */}
+        {/* posts일 때만 카테고리 노출 */}
         {table === "posts" && (
           <>
             <label className="font-medium">언어:</label>
             <select
               value={category}
-              onChange={e => setCategory(e.target.value)}
+              onChange={(e) => setCategory(e.target.value)}
               className="p-2 border rounded bg-gray-100 dark:bg-gray-900 dark:border-gray-700"
             >
               <option value="html">HTML</option>
@@ -92,17 +95,17 @@ export default function SimpleEditorWrapper({
       <input
         type="text"
         value={title}
-        onChange={e => setTitle(e.target.value)}
+        onChange={(e) => setTitle(e.target.value)}
         placeholder="제목을 입력하세요"
         className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-900 dark:border-gray-700"
       />
 
-      {/* 에디터 */}
+      {/* 본문 에디터 */}
       <SimpleEditor
         ref={editorRef}
         onSave={handleSave}
         initialContent={initialContent}
       />
     </div>
-  )
+  );
 }
