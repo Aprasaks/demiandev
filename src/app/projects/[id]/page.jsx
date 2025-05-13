@@ -36,8 +36,12 @@ export default async function ProjectPage({ params }) {
 
   return (
     <main className="min-h-screen p-8 bg-white dark:bg-black text-gray-900 dark:text-gray-100 relative">
-      {/* 수정 버튼 */}
-      <EditButton postId={id} tableName="projects" />
+       <div className="w-full flex justify-end mb-4">
+         <InlineActions
+           postId={params.id}
+           tableName="posts"
+           editPath={`/simple/posts/${params.id}`}         />
+       </div>
 
       {/* 제목 */}
       <h1 className="text-3xl font-bold mb-4">{project.title}</h1>

@@ -1,4 +1,5 @@
 // File: src/app/projects/page.jsx
+
 import { createClient } from "@supabase/supabase-js";
 import ProjectsTimeline from "@/components/ProjectsTimeline";
 

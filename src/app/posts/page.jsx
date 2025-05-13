@@ -1,4 +1,5 @@
 // src/app/posts/page.jsx
+
 import { createClient } from "@supabase/supabase-js";
 import PostsTimeline from "@/components/PostsTimeline";
 

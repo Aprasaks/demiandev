@@ -1,4 +1,5 @@
 // src/app/error/page.jsx
+
 import { createClient } from "@supabase/supabase-js";
 import ErrorTable from "@/components/ErrorTable";
 

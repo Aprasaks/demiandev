@@ -2,7 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PostViewer from "@/components/PostViewer";
-import EditButton from "@/components/EditButton";
+import InlineActions from "@/components/InlineActions";
 
 export default async function PostPage({ params }) {
   const supabase = createClient(
@@ -31,9 +31,13 @@ export default async function PostPage({ params }) {
     <main className="min-h-screen overflow-auto bg-white dark:bg-black text-gray-900 dark:text-gray-100 px-8 py-12 relative">
   {/* 이 div 안의 컨텐츠만 최대 3xl 크기로 제한하고 가운데 정렬 */}
   <div className="max-w-3xl mx-auto flex flex-col items-center">
-    {/* 수정 버튼 */}
-    <EditButton postId={params.id} tableName="posts" />
-
+  <div className="w-full flex justify-end mb-4">
+         <InlineActions
+           postId={params.id}
+           tableName="posts"
+           editPath={`/simple/posts/${params.id}`}
+         />
+       </div>
     {/* 제목 */}
     <h1 className="text-4xl font-bold mb-2 text-center">
       {post.title}
