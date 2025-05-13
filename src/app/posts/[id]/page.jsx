@@ -1,23 +1,38 @@
 // src/app/posts/[id]/page.jsx
+import{useEffect, useState} from "react";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PostViewer from "@/components/PostViewer";
 import InlineActions from "@/components/InlineActions";
 
 export default async function PostPage({ params }) {
+  const [post, setPost] = useState();
+  const [error, setError] = useState(false);
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
 
-  const { data: post, error } = await supabase
+  useEffect(() => {
+ const fetchPost   = async () => {
+  const { data,  error } = await supabase
     .from("posts")
     .select("title, content, created_at, category")
     .eq("id", params.id)
     .single();
+  
+  if (error || !data) {
+    setError(true);
+    } else { 
+    setPost(data); 
+  }
+ };
+  fetchPost();
+}, [params.id]);
 
-  if (error || !post) {
-    return (
+if (error) {
+      return (
       <main className="min-h-screen p-8 bg-white dark:bg-black flex flex-col items-center justify-center">
         <p className="text-red-500 mb-4">글을 불러오는 데 실패했습니다.</p>
         <Link href="/posts" className="text-blue-600 hover:underline">
@@ -26,7 +41,7 @@ export default async function PostPage({ params }) {
       </main>
     );
   }
-
+if(!post) return<main className= "p-8">Loading...</main>
   return (
     <main className="min-h-screen overflow-auto bg-white dark:bg-black text-gray-900 dark:text-gray-100 px-8 py-12 relative">
   {/* 이 div 안의 컨텐츠만 최대 3xl 크기로 제한하고 가운데 정렬 */}
@@ -61,3 +76,5 @@ export default async function PostPage({ params }) {
 </main>
   );
 }
+
+
