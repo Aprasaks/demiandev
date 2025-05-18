@@ -1,0 +1,50 @@
+/* src/components/RingCarousel.css */
+
+.ring-carousel {
+  perspective: 1500px;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+   width: 0 !important;
+   height: 0 !important;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--ring-tilt));
+  animation: spin var(--ring-speed) linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotateX(var(--ring-tilt)) rotateY(360deg);
+  }
+}
+
+.ring__item {
+  --angle: calc((var(--i) / var(--n)) * 360deg);
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform:
+  rotateY(var(--angle))
+  translateZ(var(--ring-radius));
+}
+
+.book-card {
+  width: 60px;
+  height: 80px;
+  background: #2d3748;
+  padding: 10px;
+  border-radius: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.65rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}

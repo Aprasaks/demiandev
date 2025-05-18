@@ -47,18 +47,67 @@
   animation: fade-in 0.4s ease-out;
 }
 
-/* globals.css 등에 추가 */
-.brick {
-  width: 6rem;            /* 벽돌 가로 크기 */
-  height: 2rem;           /* 벽돌 세로 크기 */
-  background-color: #c04b31;
-  border: 2px solid #9a3c29;
-  border-radius: 2px;
+
+.perspective-1000 { perspective: 1000px; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+/* globals.css에 추가 */
+.transform-style-3d {
+  transform-style: preserve-3d;
 }
-.brick-stack {
-  display: grid;
-  grid-auto-flow: row;     /* 행 방향으로 채우되 */
-  grid-auto-rows: 2rem;    /* 각 행 높이 고정 */
-  justify-items: center;   /* 가운데 정렬 */
-  align-content: end;      /* 전체 콘텐츠를 바닥에 붙여 채움 */
+
+@keyframes shine {
+  0%   { background-position: -150% 0; }
+  50%  { background-position: 150% 0; }
+  100% { background-position: -150% 0; }
 }
+
+.shine-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  /* 1) 각도와 범위 조정, 반투명 컬러를 낮춰서 은은하게 */
+  background: linear-gradient(
+    60deg,
+    rgba(255,255,255,0) 10%,
+    rgba(255,255,255,0.08) 45%,
+    rgba(255,255,255,0) 80%
+  );
+
+  /* 2) 블러를 추가해 부드럽게 번짐 효과 */
+  filter: blur(6px);
+
+  /* 3) 애니메이션 속도를 느리게, 부드러운 ease-in-out */
+  background-size: 300% 100%;
+  animation: shine 12s ease-in-out infinite;
+}
+
+/* src/styles/globals.css */
+.textured-bg {
+  background: 
+             /* 가벼운 노이즈/텍스처 */
+    linear-gradient(135deg, #0a0f1b, #1a2030);    /* 두 가지 다크 톤 그라데이션 */
+}
+
+/* 검색창 글로우/네온 효과 */
+.glow-search {
+  box-shadow: 0 0 18px 6px #fff3, 0 0 32px 16px #fff2;
+  border: 2px solid #fff5;
+  background: linear-gradient(90deg, #fff3 0%, #fff1 100%);
+  animation: search-glow 3s infinite alternate;
+}
+
+@keyframes search-glow {
+  0% {
+    box-shadow: 0 0 16px 5px #fff2, 0 0 28px 14px #fff1;
+    border-color: #fff3;
+    background: linear-gradient(90deg, #fff3 0%, #fff1 100%);
+  }
+  100% {
+    box-shadow: 0 0 22px 8px #fff4, 0 0 36px 18px #fff3;
+    border-color: #fff7;
+    background: linear-gradient(90deg, #fff4 0%, #fff2 100%);
+  }
+}
+

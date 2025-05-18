@@ -1,0 +1,30 @@
+<!-- public/icons/book.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="128" viewBox="0 0 64 128">
+  <defs>
+    <!-- 1) 외부 이미지를 패턴으로 정의 -->
+    <pattern id="spine-texture" patternUnits="userSpaceOnUse" width="64" height="128">
+      <image href="/background/real-book-texture.jpg" x="0" y="0" width="64" height="128"/>
+    </pattern>
+    <!-- 2) 책등 전면용 그라데이션 (살짝 광택 느낌) -->
+    <linearGradient id="spine-shine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.05"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <!-- A) 책등 전면: 패턴 + 광택 오버레이 -->
+  <rect x="4" y="4" width="56" height="120" rx="4" ry="4"
+        fill="url(#spine-texture)"
+        style="mix-blend-mode: multiply"/>
+  <rect x="4" y="4" width="56" height="120" rx="4" ry="4"
+        fill="url(#spine-shine)" />
+
+  <!-- B) 옆면 두께감 -->
+  <polygon points="4,4 10,0 10,124 4,124"
+           fill="rgba(0,0,0,0.3)" />
+
+  <!-- C) 디테일 라인 -->
+  <line x1="14" y1="16" x2="50" y2="16" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <line x1="14" y1="32" x2="50" y2="32" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+</svg>
