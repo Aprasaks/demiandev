@@ -19,6 +19,12 @@ export default function PostsIndexPage() {
   const [requestSent, setRequestSent] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
 
+  // 페이지네이션 (카드 4개씩)
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 4;
+  const totalPages = Math.ceil(results.length / pageSize);
+  const pagedResults = results.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const particlesInit = async engine => { await loadSlim(engine); };
 
   const handleSubmit = async e => {
@@ -52,6 +58,7 @@ export default function PostsIndexPage() {
 
     setSearched(true);
     setLoading(false);
+    setCurrentPage(1); // 검색할 때마다 1페이지로
   };
 
   const getContainerClass = () => {
@@ -142,7 +149,7 @@ export default function PostsIndexPage() {
 
         <div
           className={`flex flex-wrap items-end justify-center gap-8 ${getContainerClass()}`}
-          style={{ minHeight: '100px' }}  // 검색 전후에 항상 100px 높이 확보
+          style={{ minHeight: '100px' }}
         >
           {/* 검색 전 */}
           {!searched && (
@@ -152,8 +159,8 @@ export default function PostsIndexPage() {
           {/* 로딩 */}
           {loading && <div className="text-gray-300">검색 중...</div>}
 
-          {/* 결과 */}
-          {searched && !loading && results.map((item, i) => (
+          {/* 결과 (카드 4개만) */}
+          {searched && !loading && pagedResults.map((item, i) => (
             <Link
               key={`${item._type}_${item.id}`}
               href={`/${item._type}/${item.id}`}
@@ -193,6 +200,27 @@ export default function PostsIndexPage() {
             </div>
           )}
         </div>
+
+        {/* 페이지네이션 (화살표) */}
+        {searched && !loading && results.length > pageSize && (
+          <div className="flex items-center justify-center gap-3 mt-8">
+            <button
+              className={`px-3 py-1 rounded-full bg-white/10 hover:bg-white/30 transition ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(c => c - 1)}
+            >
+              ←
+            </button>
+            <span className="text-base text-white/80 select-none">{currentPage} / {totalPages}</span>
+            <button
+              className={`px-3 py-1 rounded-full bg-white/10 hover:bg-white/30 transition ${currentPage === totalPages ? 'opacity-30 cursor-not-allowed' : ''}`}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(c => c + 1)}
+            >
+              →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 기록요청 모달 */}
