@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 
+
 const ToastViewer = dynamic(
   () => import('@toast-ui/react-editor').then(m => m.Viewer),
   { ssr: false }

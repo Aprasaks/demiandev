@@ -1,81 +1,63 @@
+// src/app/write/page.jsx
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import Particles from 'react-tsparticles';
-import { loadSlim } from 'tsparticles-slim';
+import { useRouter }       from 'next/navigation';
+import dynamic              from 'next/dynamic';
+import Particles            from 'react-tsparticles';
+import { loadSlim }         from 'tsparticles-slim';
 import '@toast-ui/editor/dist/toastui-editor.css';
-import { supabase } from '@/lib/supabaseClient';
+import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
+import '@toast-ui/editor/dist/toastui-editor-viewer.css';
+import { supabase }         from '@/lib/supabaseClient';
 
-const ToastEditor = dynamic(
-  () => import('@toast-ui/react-editor').then(mod => mod.Editor),
+// Editor만 클라이언트 전용으로 로드 (플러그인도 없고, 문법 강조는 뷰어에서 처리)
+const Editor = dynamic(
+  () => import('@toast-ui/react-editor').then(m => m.Editor),
   { ssr: false }
 );
 
 const POST_TYPES = [
-  { value: 'dev', label: '개발 지식 포스트' },
+  { value: 'dev',     label: '개발 지식 포스트' },
   { value: 'project', label: '프로젝트 포스트' },
-  { value: 'error', label: '에러 모음 포스트' },
+  { value: 'error',   label: '에러 모음 포스트' },
 ];
-
 const CATEGORY_MAP = {
-  dev: [
-    'HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'TypeScript', 'Next.js', '기타'
-  ],
-  project: [
-    '기본'
-  ],
-  error: [
-    '기본'
-  ],
+  dev:     ['HTML','CSS','JavaScript','React','Node.js','TypeScript','Next.js','기타'],
+  project: ['기본'],
+  error:   ['기본'],
 };
 
 export default function WritePage() {
-  const [type, setType] = useState('dev');
-  const [category, setCategory] = useState(CATEGORY_MAP['dev'][0]);
-  const [title, setTitle] = useState('');
+  const router    = useRouter();
   const editorRef = useRef();
-  const router = useRouter();
+  const [type, setType]         = useState('dev');
+  const [category, setCategory] = useState(CATEGORY_MAP.dev[0]);
+  const [title, setTitle]       = useState('');
 
-  const particlesInit = async (engine) => {
-    await loadSlim(engine);
+  const particlesInit = async engine => { await loadSlim(engine); };
+
+  const handleTypeChange = e => {
+    const next = e.target.value;
+    setType(next);
+    setCategory(CATEGORY_MAP[next][0]);
   };
 
-  const handleTypeChange = (e) => {
-    const nextType = e.target.value;
-    setType(nextType);
-    setCategory(CATEGORY_MAP[nextType][0]);
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     const content = editorRef.current?.getInstance().getMarkdown() || '';
-    if (title.trim() && content.trim()) {
-      // type에 따라 테이블명 결정
-      let table = 'posts';
-      if (type === 'project') table = 'projects';
-      else if (type === 'error') table = 'error';
-
-      const { error } = await supabase
-        .from(table)
-        .insert([
-          {
-            title,
-            content,
-            category,
-            type,
-            created_at: new Date().toISOString(),
-          }
-        ]);
-      if (error) {
-        alert('저장 실패: ' + error.message);
-      } else {
-        alert('저장 완료!');
-        router.push('/posts');
-      }
-    } else {
+    if (!title.trim() || !content.trim()) {
       alert('제목과 내용을 모두 입력하세요!');
+      return;
+    }
+    const { error } = await supabase
+      .from('posts')
+      .insert([{ title, content, category, type, created_at: new Date().toISOString() }]);
+    if (error) {
+      alert('저장 실패: ' + error.message);
+    } else {
+      alert('저장 완료!');
+      router.push('/posts');
     }
   };
 
@@ -88,29 +70,31 @@ export default function WritePage() {
         options={{
           fpsLimit: 60,
           particles: {
-            number: { value: 50, density: { enable: true, area: 800 } },
-            size:   { value: { min: 1, max: 3 } },
-            move:   { enable: true, speed: 0.3, outModes: 'out' },
-            color:  { value: '#ffffff40' },
-            opacity:{ value: { min: 0.1, max: 0.3 } },
+            number:  { value: 50, density: { enable: true, area: 800 } },
+            size:    { value: { min: 1, max: 3 } },
+            move:    { enable: true, speed: 0.3, outModes: 'out' },
+            color:   { value: '#ffffff40' },
+            opacity: { value: { min: 0.1, max: 0.3 } },
           },
         }}
       />
 
-      <div className="flex flex-col items-center justify-center min-h-screen relative z-10">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-10 w-full max-w-4xl mt-24">
-          <h2 className="text-3xl font-bold mb-10 flex items-center gap-2 justify-center tracking-tight">
+          <h2 className="text-3xl font-bold mb-10 flex items-center gap-2 justify-center">
             <span>✍️</span> 새 글 작성
           </h2>
+
           <form onSubmit={handleSubmit}>
+            {/* 타입/카테고리 선택 */}
             <div className="flex gap-4 mb-8">
               <select
                 value={type}
                 onChange={handleTypeChange}
                 className="w-1/2 px-4 py-3 rounded-lg bg-white/20 text-white focus:ring-2 focus:ring-blue-400 outline-none transition font-semibold text-base"
               >
-                {POST_TYPES.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                {POST_TYPES.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
               <select
@@ -123,6 +107,8 @@ export default function WritePage() {
                 ))}
               </select>
             </div>
+
+            {/* 제목 입력 */}
             <input
               type="text"
               value={title}
@@ -131,25 +117,31 @@ export default function WritePage() {
               placeholder="제목을 입력하세요"
               maxLength={64}
             />
+
+            {/* 에디터: 코드블럭 버튼만 활성화 */}
             <div className="mb-10 bg-white/10 rounded-xl overflow-hidden shadow-md border border-white/10">
-              <ToastEditor
+              <Editor
                 ref={editorRef}
                 initialValue=""
                 height="480px"
-                placeholder="내용을 입력하세요..."
                 previewStyle="vertical"
+                initialEditType="wysiwyg"
+                useCommandShortcut={true}
                 theme="dark"
                 usageStatistics={false}
-                hideModeSwitch={true}
+                // hideModeSwitch를 제거해서 Markdown/WYSIWYG 토글 허용
                 toolbarItems={[
-                  ['heading', 'bold', 'italic', 'strike'],
-                  ['hr', 'quote'],
-                  ['ul', 'ol', 'task', 'indent', 'outdent'],
-                  ['table', 'image', 'link'],
-                  ['code', 'codeblock'],
+                  ['heading','bold','italic','strike'],
+                  ['hr','quote'],
+                  ['ul','ol','task','indent','outdent'],
+                  ['table','image','link'],
+                  ['code','codeblock'],    // 여기에 code + codeblock
+                  ['scrollSync'],
                 ]}
               />
             </div>
+
+            {/* 저장 버튼 */}
             <div className="flex justify-end">
               <button
                 type="submit"
