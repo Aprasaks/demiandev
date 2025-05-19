@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
 
 export default function PostsIndexPage() {
   const [term, setTerm] = useState('');
@@ -15,34 +16,34 @@ export default function PostsIndexPage() {
   // 파티클
   const particlesInit = async (engine) => { await loadSlim(engine); };
 
-  // Supabase에서 posts, projects, error 테이블 통합 검색
+  // 통합 검색
   const handleSubmit = async (e) => {
     e.preventDefault();
     const q = term.trim();
     if (!q) return;
     setLoading(true);
 
-    // 3개 테이블 병렬 검색 (title + content 기준)
+    // 3개 테이블 검색 (title + content)
     const [devRes, projectRes, errorRes] = await Promise.all([
       supabase.from('posts').select('*').or(`title.ilike.%${q}%,content.ilike.%${q}%`),
       supabase.from('projects').select('*').or(`title.ilike.%${q}%,content.ilike.%${q}%`),
       supabase.from('error').select('*').or(`title.ilike.%${q}%,content.ilike.%${q}%`),
     ]);
 
-    // 에러 처리
+    // 에러처리
     if (devRes.error || projectRes.error || errorRes.error) {
       setResults([]);
     } else {
-      // 결과 통합, 타입구분
+      // 결과 통합
       const allResults = [
         ...(devRes.data || []).map(item => ({
           ...item,
-          _type: 'dev',
-          image: item.image || 'https://source.unsplash.com/160x220/?book,dev', // 썸네일 없을 때 기본 이미지
+          _type: 'posts',
+          image: item.image || 'https://source.unsplash.com/160x220/?book,dev',
         })),
         ...(projectRes.data || []).map(item => ({
           ...item,
-          _type: 'project',
+          _type: 'projects',
           image: item.image || 'https://source.unsplash.com/160x220/?book,project',
         })),
         ...(errorRes.data || []).map(item => ({
@@ -57,7 +58,7 @@ export default function PostsIndexPage() {
     setLoading(false);
   };
 
-  // 카드 컨테이너 클래스
+  // 카드 애니메이션
   const getCardContainerClass = () => {
     if (!searched) return 'before-search';
     if (results.length <= 1) return 'search-one';
@@ -67,7 +68,7 @@ export default function PostsIndexPage() {
   return (
     <main className="relative h-screen textured-bg text-white overflow-hidden">
       {/* 배경 */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 ">
         <div className="w-full h-full bg-cover bg-center filter blur-sm scale-110" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
       </div>
@@ -115,11 +116,11 @@ export default function PostsIndexPage() {
           </button>
         </form>
 
-        {/* 결과 카드 (검색 전: 빈 카드 / 검색 후: 펼쳐짐) */}
+        {/* 카드 리스트 */}
         <div
           className={`relative flex justify-center items-end gap-6 card-anim-container ${getCardContainerClass()}`}
         >
-          {/* 검색 전: 빈 카드 한 개 */}
+          {/* 검색 전 */}
           {!searched && (
             <div
               className="bg-white/10 rounded-xl shadow-xl overflow-hidden border border-white/10 backdrop-blur-lg flex flex-col items-center w-40 h-56 min-w-[8rem] max-w-xs justify-center animate-fadein"
@@ -137,36 +138,41 @@ export default function PostsIndexPage() {
             <div className="text-lg text-gray-300 px-10 py-16">검색중...</div>
           )}
 
-          {/* 검색 후: 결과 개수만큼 카드가 “펼쳐지며” 나옴 */}
+          {/* 결과 */}
           {searched && !loading && results.map((post, i) => (
-  <div
-    key={`${post._type}_${post.id}`}
-    className="bg-white/10 rounded-xl shadow-lg overflow-hidden border border-white/10 backdrop-blur-lg flex flex-col items-center w-36 min-w-[8rem] max-w-xs animate-expand"
-    style={{
-      transform: `translateY(0)`, 
-      boxShadow: '0 8px 32px #0008',
-      opacity: 1,
-      transition: 'transform 0.7s cubic-bezier(.4,2,.3,1), opacity 0.5s',
-      animationDelay: `${0.06 * i}s`,
-    }}
-  >
- 
-              <img
-                src={post.image}
-                alt={post.title}
-                className="w-24 h-32 object-cover mt-4 rounded-lg bg-gray-200"
-              />
-              <div className="flex-1 flex flex-col items-center justify-center p-2">
-                {/* 타입/카테고리 표시 */}
-                <div className="text-xs font-semibold text-cyan-300 mb-1">{{
-                  dev: '개발지식',
-                  project: '프로젝트',
-                  error: '에러모음'
-                }[post._type] || ''}</div>
-                <div className="text-sm font-bold text-white mb-1 truncate text-center">{post.title}</div>
-                <div className="text-xs text-gray-300 text-center">{post.category || ''}</div>
+            <Link
+              key={`${post._type}_${post.id}`}
+              href={`/${post._type}/${post.id}`}
+              className="hover:scale-[1.03] transition-all duration-200"
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <div
+                className="bg-white/10 rounded-xl shadow-lg overflow-hidden border border-white/10 backdrop-blur-lg flex flex-col items-center w-36 min-w-[8rem] max-w-xs animate-expand cursor-pointer"
+                style={{
+                  transform: `translateY(0)`,
+                  boxShadow: '0 8px 32px #0008',
+                  opacity: 1,
+                  transition: 'transform 0.7s cubic-bezier(.4,2,.3,1), opacity 0.5s',
+                  animationDelay: `${0.06 * i}s`,
+                }}
+              >
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="w-24 h-32 object-cover mt-4 rounded-lg bg-gray-200"
+                />
+                <div className="flex-1 flex flex-col items-center justify-center p-2">
+                  {/* 타입/카테고리 */}
+                  <div className="text-xs font-semibold text-cyan-300 mb-1">{{
+                    posts: '개발지식',
+                    projects: '프로젝트',
+                    error: '에러모음'
+                  }[post._type] || ''}</div>
+                  <div className="text-sm font-bold text-white mb-1 truncate text-center">{post.title}</div>
+                  <div className="text-xs text-gray-300 text-center">{post.category || ''}</div>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
 
           {/* 검색했지만 결과 없을 때 */}

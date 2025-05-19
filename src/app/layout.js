@@ -8,6 +8,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/lib/supabaseClient";
 
+
 import "./globals.css";
 import "../../src/styles/_variables.scss";
 import "../../src/styles/_keyframe-animations.scss";
