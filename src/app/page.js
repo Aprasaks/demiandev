@@ -3,11 +3,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter }       from 'next/navigation';
-import { ArrowRight }      from 'lucide-react';
-import { motion }          from 'framer-motion';         // ← 추가
+import { ArrowRight, Heart } from 'lucide-react';
+import { motion }          from 'framer-motion';
 import Particles           from 'react-tsparticles';
 import { loadSlim }        from 'tsparticles-slim';
 import MultiRingCarousel   from '@/components/MultiRingCarousel';
+import { supabase }        from '@/lib/supabaseClient';
 
 export default function HomePage() {
   const router = useRouter();
@@ -44,24 +45,65 @@ export default function HomePage() {
     router.push('/posts');
   };
 
+  // 좋아요 로직
+  const [likes, setLikes]           = useState(0);
+  const [loadingLikes, setLoadingLikes] = useState(true);
+  const [hasLiked, setHasLiked]     = useState(false);
+  const [toggling, setToggling]     = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from('likes')
+        .select('count')
+        .eq('id', 'homepage')
+        .single();
+      if (!error && data) {
+        setLikes(data.count);
+      } else {
+        console.error('좋아요 수 로드 실패', error);
+      }
+      if (typeof window !== 'undefined' && localStorage.getItem('liked_homepage')) {
+        setHasLiked(true);
+      }
+      setLoadingLikes(false);
+    })();
+  }, []);
+
+  const handleLike = async () => {
+    if (loadingLikes || toggling || hasLiked) return;
+    setToggling(true);
+    setLikes(prev => prev + 1);
+    const { error } = await supabase
+      .from('likes')
+      .update({ count: likes + 1 })
+      .eq('id', 'homepage');
+    if (error) {
+      console.error('좋아요 업데이트 실패', error);
+      setLikes(prev => prev - 1);
+    } else {
+      localStorage.setItem('liked_homepage', 'true');
+      setHasLiked(true);
+    }
+    setToggling(false);
+  };
+
   return (
     <main className="relative h-screen bg-gray-900 text-white overflow-hidden">
       {/* 배경 + 블러 + 그라데이션 */}
-      <div className="absolute inset-0">
-        <div
-          className="w-full h-full bg-cover bg-center filter blur-sm scale-110"
-        />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="w-full h-full bg-cover bg-center filter blur-sm scale-110" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
       </div>
 
       {/* 빛 번짐 */}
-      <div className="shine-overlay" />
+      <div className="shine-overlay pointer-events-none" />
 
       {/* 파티클 */}
       <Particles
         id="tsparticles"
         init={particlesInit}
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 pointer-events-none"
         options={{
           fpsLimit: 60,
           particles: {
@@ -107,6 +149,22 @@ export default function HomePage() {
           검색하기 <ArrowRight size={20} />
         </motion.button>
       </div>
+
+      {/* 오른쪽 하단 좋아요 버튼 */}
+      <button
+        onClick={handleLike}
+        disabled={loadingLikes || toggling || hasLiked}
+        className={`
+          fixed right-6 bottom-6 z-20 flex items-center space-x-2
+          ${hasLiked ? 'bg-gray-600' : 'bg-red-600 hover:bg-red-700'}
+          text-white rounded-full px-4 py-3 shadow-lg transition
+          ${loadingLikes || toggling || hasLiked ? 'opacity-50 cursor-default' : ''}
+        `}
+        title={hasLiked ? '이미 좋아요를 누르셨습니다' : '이 홈페이지가 마음에 든다면 눌러주세요!'}
+      >
+        <Heart className="w-6 h-6" />
+        <span className="font-medium">{likes}</span>
+      </button>
     </main>
   );
 }
