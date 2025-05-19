@@ -1,4 +1,4 @@
-// src/app/posts/[postId]/page.jsx
+// src/app/error/[postId]/page.jsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -24,34 +24,34 @@ const ToastViewer = dynamic(
   { ssr: false }
 );
 
-export default function PostDetailPage() {
+export default function ErrorDetailPage() {
   const { postId } = useParams();
-  const [post,    setPost]    = useState(null);
+  const [errItem, setErrItem] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from('posts')
+        .from('error')
         .select('*')
         .eq('id', postId)
         .single();
-      setPost(data);
+      setErrItem(data);
       setLoading(false);
     })();
   }, [postId]);
 
   useEffect(() => {
-    if (!post) return;
+    if (!errItem) return;
     setTimeout(() => {
       document.querySelectorAll('pre code').forEach(el => {
         hljs.highlightElement(el);
       });
     }, 100);
-  }, [post]);
+  }, [errItem]);
 
   if (loading) return <div className="text-center py-16">로딩 중…</div>;
-  if (!post)   return <div className="text-center py-16">글을 찾을 수 없습니다.</div>;
+  if (!errItem) return <div className="text-center py-16">에러 항목을 찾을 수 없습니다.</div>;
 
   return (
     <main className="relative h-screen textured-bg text-white">
@@ -61,9 +61,9 @@ export default function PostDetailPage() {
       </div>
       <div className="relative z-10 h-full overflow-auto px-4 py-8">
         <div className="max-w-2xl mx-auto p-8 bg-white/10 rounded-xl shadow-lg backdrop-blur-lg">
-          <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
+          <h1 className="text-3xl font-bold mb-2">{errItem.title}</h1>
           <ToastViewer
-            initialValue={post.content}
+            initialValue={errItem.content}
             theme="dark"
             usageStatistics={false}
           />
