@@ -111,3 +111,14 @@
   }
 }
 
+/* Toast UI Viewer 본문 전체 글씨 크게! */
+.toastui-editor-contents {
+  font-size: 1.25rem !important; /* 20px */
+  line-height: 1.8;
+}
+
+@media (min-width: 768px) {
+  .toastui-editor-contents {
+    font-size: 1.2rem !important; /* 22.4px */
+  }
+}

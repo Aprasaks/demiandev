@@ -60,7 +60,7 @@ export default function PostDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
       </div>
       <div className="relative z-10 h-full overflow-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto p-8 bg-white/10 rounded-xl shadow-lg backdrop-blur-lg">
+        <div className="max-w-3xl mx-auto p-8 bg-white/10 rounded-xl shadow-lg backdrop-blur-lg">
           <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
           <ToastViewer
             initialValue={post.content}
