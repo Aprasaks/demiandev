@@ -1,25 +1,33 @@
 // src/components/GAProvider.jsx
 "use client";
-
-import Script from "next/script";
+import { useEffect } from "react";
 
 export default function GAProvider({ gaId }) {
-  if (!gaId) return null;
-  return (
-    <>
-      {/* 구글 애널리틱스 스크립트 삽입 */}
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="afterInteractive"
-      />
-      <Script id="ga-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${gaId}', { page_path: window.location.pathname });
-        `}
-      </Script>
-    </>
-  );
+  useEffect(() => {
+    if (!gaId) return;
+
+    // gtag.js 삽입
+    const script = document.createElement("script");
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    script.async = true;
+    document.head.appendChild(script);
+
+    // gtag 초기화 코드 삽입
+    const inlineScript = document.createElement("script");
+    inlineScript.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${gaId}', { page_path: window.location.pathname });
+    `;
+    document.head.appendChild(inlineScript);
+
+    // cleanup
+    return () => {
+      document.head.removeChild(script);
+      document.head.removeChild(inlineScript);
+    };
+  }, [gaId]);
+
+  return null;
 }

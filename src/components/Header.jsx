@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -63,7 +62,6 @@ export default function Header() {
               className="w-8 h-8 flex items-center justify-center hover:text-red-500"
               title="Logout"
             >
-              {/* 로그아웃 아이콘 */}
               <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 512 512" className="w-6 h-6">
                 <path d="M497 273l-80 80c-15 15-41 4.5-41-17v-48H215c-13 0-24-11-24-24v-32c0-13 11-24 24-24h161v-48c0-21.5 26-32 41-17l80 80c9 9 9 23.6 0 32.6zM272 432v48c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V32C0 5.5 21.5-16 48-16h176c26.5 0 48 21.5 48 48v48c0 13.3-10.7 24-24 24s-24-10.7-24-24V32H48v448h176v-48c0-13.3 10.7-24 24-24s24 10.7 24 24z" />
               </svg>
@@ -75,7 +73,6 @@ export default function Header() {
             className="w-8 h-8 flex items-center justify-center"
             title="Login"
           >
-            {/* 사용자 아이콘 */}
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
@@ -93,24 +90,6 @@ export default function Header() {
           </svg>
         </a>
       </div>
-
-      {/* 로그인 모달 */}
-      {showLogin && !session && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full relative">
-            <button onClick={() => setShowLogin(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
-              ✕
-            </button>
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              providers={[]}
-              onlyThirdPartyProviders={false}
-              view="sign_in"
-            />
-          </div>
-        </div>
-      )}
     </header>
   );
 }
