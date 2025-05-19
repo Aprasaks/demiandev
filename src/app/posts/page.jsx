@@ -1,4 +1,3 @@
-// src/app/posts/page.jsx
 'use client';
 
 import React, { useState } from 'react';
@@ -14,9 +13,13 @@ export default function PostsIndexPage() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const particlesInit = async engine => {
-    await loadSlim(engine);
-  };
+  // 기록요청 모달 관련 state
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestText, setRequestText] = useState('');
+  const [requestSent, setRequestSent] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+
+  const particlesInit = async engine => { await loadSlim(engine); };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -54,6 +57,38 @@ export default function PostsIndexPage() {
   const getContainerClass = () => {
     if (!searched) return 'before-search';
     return results.length > 1 ? 'search-many' : 'search-one';
+  };
+
+  // 기록 요청 처리 함수 (Supabase + Discord)
+  const handleRequestLog = async () => {
+    if (!requestText.trim() || requestLoading) return;
+    setRequestLoading(true);
+
+    // 1. Supabase 기록 남기기
+    await supabase.from('requests').insert({
+      keyword: term,
+      message: requestText,
+      created_at: new Date().toISOString(),
+    });
+
+    // 2. Discord Webhook으로도 요청 (api route로 fetch)
+    await fetch('/api/request-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword: term,
+        message: requestText,
+      }),
+    });
+
+    setRequestSent(true);
+    setRequestLoading(false);
+
+    setTimeout(() => {
+      setShowRequestModal(false);
+      setRequestText('');
+      setRequestSent(false);
+    }, 1800);
   };
 
   return (
@@ -106,8 +141,8 @@ export default function PostsIndexPage() {
         </form>
 
         <div
-        className={`flex flex-wrap items-end justify-center gap-8 ${getContainerClass()}`}
-        style={{ minHeight: '100px' }}  // 검색 전후에 항상 250px 높이를 확보
+          className={`flex flex-wrap items-end justify-center gap-8 ${getContainerClass()}`}
+          style={{ minHeight: '100px' }}  // 검색 전후에 항상 100px 높이 확보
         >
           {/* 검색 전 */}
           {!searched && (
@@ -145,12 +180,52 @@ export default function PostsIndexPage() {
             </Link>
           ))}
 
-          {/* 검색 후 결과 없음 */}
+          {/* 검색 후 결과 없음 + 기록요청 */}
           {searched && !loading && results.length === 0 && (
-            <div className="text-gray-400 text-lg opacity-70">검색 결과가 없습니다</div>
+            <div className="flex flex-col items-center gap-4 text-gray-400 text-lg opacity-70 mt-4">
+              <div>검색 결과가 없습니다</div>
+              <button
+                className="px-5 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full shadow transition"
+                onClick={() => setShowRequestModal(true)}
+              >
+                기록 요청하기
+              </button>
+            </div>
           )}
         </div>
       </div>
+
+      {/* 기록요청 모달 */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white text-black rounded-lg p-6 w-full max-w-sm shadow-xl relative">
+            <button
+              onClick={() => setShowRequestModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-black text-xl"
+            >✕</button>
+            <div className="font-bold text-lg mb-3">기록 요청하기</div>
+            <div className="mb-2 text-sm text-gray-600">아래에 요청 내용을 작성해주세요.</div>
+            <textarea
+              value={requestText}
+              onChange={e => setRequestText(e.target.value)}
+              rows={4}
+              className="w-full border rounded p-2 mb-4"
+              placeholder={`예) "${term}"에 대한 기록을 요청합니다.`}
+              disabled={requestSent}
+            />
+            <button
+              className="bg-blue-700 hover:bg-blue-600 text-white rounded px-5 py-2 font-bold w-full"
+              onClick={handleRequestLog}
+              disabled={!requestText.trim() || requestLoading || requestSent}
+            >
+              {requestLoading ? "요청 중..." : requestSent ? "요청 완료!" : "요청하기"}
+            </button>
+            {requestSent && (
+              <div className="mt-3 text-green-700 text-center font-bold">요청이 접수되었습니다!</div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
