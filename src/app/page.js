@@ -156,7 +156,7 @@ export default function HomePage() {
         disabled={loadingLikes || toggling || hasLiked}
         className={`
           fixed right-6 bottom-6 z-20 flex items-center space-x-2
-          ${hasLiked ? 'bg-gray-600' : 'bg-red-600 hover:bg-red-700'}
+          ${hasLiked ? 'bg-red-600' : 'bg-gray-600 hover:bg-red-700'}
           text-white rounded-full px-4 py-3 shadow-lg transition
           ${loadingLikes || toggling || hasLiked ? 'opacity-50 cursor-default' : ''}
         `}
