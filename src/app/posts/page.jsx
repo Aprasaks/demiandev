@@ -1,3 +1,4 @@
+// src/app/posts/page.jsx
 'use client';
 
 import React, { useState } from 'react';
@@ -13,62 +14,52 @@ export default function PostsIndexPage() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 파티클
-  const particlesInit = async (engine) => { await loadSlim(engine); };
+  const particlesInit = async engine => {
+    await loadSlim(engine);
+  };
 
-  // 통합 검색
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     const q = term.trim();
     if (!q) return;
     setLoading(true);
 
-    // 3개 테이블 검색 (title + content)
+    // posts / projects / error 세 테이블에서 통합 검색
     const [devRes, projectRes, errorRes] = await Promise.all([
       supabase.from('posts').select('*').or(`title.ilike.%${q}%,content.ilike.%${q}%`),
       supabase.from('projects').select('*').or(`title.ilike.%${q}%,content.ilike.%${q}%`),
       supabase.from('error').select('*').or(`title.ilike.%${q}%,content.ilike.%${q}%`),
     ]);
 
-    // 에러처리
     if (devRes.error || projectRes.error || errorRes.error) {
       setResults([]);
     } else {
-      // 결과 통합
-      const allResults = [
-        ...(devRes.data || []).map(item => ({
-          ...item,
-          _type: 'posts',
-          image: item.image || 'https://source.unsplash.com/160x220/?book,dev',
-        })),
-        ...(projectRes.data || []).map(item => ({
-          ...item,
-          _type: 'projects',
-          image: item.image || 'https://source.unsplash.com/160x220/?book,project',
-        })),
-        ...(errorRes.data || []).map(item => ({
-          ...item,
-          _type: 'error',
-          image: item.image || 'https://source.unsplash.com/160x220/?book,error',
-        })),
-      ];
-      setResults(allResults);
+      const all = [
+        ...(devRes.data || []).map(item => ({ ...item, _type: 'posts' })),
+        ...(projectRes.data || []).map(item => ({ ...item, _type: 'projects' })),
+        ...(errorRes.data || []).map(item => ({ ...item, _type: 'error' })),
+      ].map(item => ({
+        ...item,
+        image:
+          item.image ||
+          `https://source.unsplash.com/400x533/?${encodeURIComponent(item.title.split(' ')[0] || 'code')}`,
+      }));
+      setResults(all);
     }
+
     setSearched(true);
     setLoading(false);
   };
 
-  // 카드 애니메이션
-  const getCardContainerClass = () => {
+  const getContainerClass = () => {
     if (!searched) return 'before-search';
-    if (results.length <= 1) return 'search-one';
-    return 'search-many';
+    return results.length > 1 ? 'search-many' : 'search-one';
   };
 
   return (
-    <main className="relative h-screen textured-bg text-white overflow-hidden">
-      {/* 배경 */}
-      <div className="absolute inset-0 ">
+    <main className="relative h-screen bg-gray-900 text-white overflow-hidden">
+      {/* 배경 + 그라데이션 */}
+      <div className="absolute inset-0">
         <div className="w-full h-full bg-cover bg-center filter blur-sm scale-110" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
       </div>
@@ -81,19 +72,18 @@ export default function PostsIndexPage() {
         options={{
           fpsLimit: 60,
           particles: {
-            number: { value: 50, density: { enable: true, area: 800 } },
+            number: { value: 60, density: { enable: true, area: 800 } },
             size: { value: { min: 1, max: 3 } },
-            move: { enable: true, speed: 0.3, outModes: 'out' },
-            color: { value: '#ffffff40' },
-            opacity: { value: { min: 0.1, max: 0.3 } },
+            move: { enable: true, speed: 0.4, outModes: 'out' },
+            color: { value: '#ffffff30' },
+            opacity: { value: { min: 0.1, max: 0.25 } },
           },
         }}
       />
 
-      {/* 중앙 검색폼 + 카드 */}
+      {/* 검색폼 + 카드 */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-4">
-        {/* 검색폼 */}
-        <form onSubmit={handleSubmit} className="relative w-full max-w-xl mb-8">
+        <form onSubmit={handleSubmit} className="relative w-full max-w-xl mb-12">
           <input
             type="text"
             value={term}
@@ -101,10 +91,9 @@ export default function PostsIndexPage() {
             placeholder="검색어를 입력하세요"
             className="
               w-full py-4 pl-5 pr-14 rounded-full
-              bg-white/20 placeholder-white/70 text-white
-              focus:outline-none focus:ring-2 focus:ring-white/50
-              backdrop-blur-sm transition
-              glow-search
+              bg-white/10 placeholder-white/60 text-white
+              focus:outline-none focus:ring-2 focus:ring-white/40
+              transition
             "
           />
           <button
@@ -116,95 +105,49 @@ export default function PostsIndexPage() {
           </button>
         </form>
 
-        {/* 카드 리스트 */}
-        <div
-          className={`relative flex justify-center items-end gap-6 card-anim-container ${getCardContainerClass()}`}
-        >
+        <div className={`flex flex-wrap justify-center gap-8 ${getContainerClass()}`}>
           {/* 검색 전 */}
           {!searched && (
-            <div
-              className="bg-white/10 rounded-xl shadow-xl overflow-hidden border border-white/10 backdrop-blur-lg flex flex-col items-center w-40 h-56 min-w-[8rem] max-w-xs justify-center animate-fadein"
-              style={{
-                boxShadow: '0 8px 32px #0008',
-                transition: 'width 0.7s cubic-bezier(.4,2,.3,1)',
-              }}
-            >
-              <span className="text-gray-400 text-base opacity-80">검색 결과 없음</span>
-            </div>
+            <div className="text-gray-400 text-lg opacity-70">검색어를 입력해 주세요</div>
           )}
 
           {/* 로딩 */}
-          {loading && (
-            <div className="text-lg text-gray-300 px-10 py-16">검색중...</div>
-          )}
+          {loading && <div className="text-gray-300">검색 중...</div>}
 
           {/* 결과 */}
-          {searched && !loading && results.map((post, i) => (
+          {searched && !loading && results.map((item, i) => (
             <Link
-              key={`${post._type}_${post.id}`}
-              href={`/${post._type}/${post.id}`}
-              className="hover:scale-[1.03] transition-all duration-200"
-              style={{ textDecoration: 'none', color: 'inherit' }}
+              key={`${item._type}_${item.id}`}
+              href={`/${item._type}/${item.id}`}
+              className="group block w-44 hover:scale-105 transform transition"
             >
-              <div
-                className="bg-white/10 rounded-xl shadow-lg overflow-hidden border border-white/10 backdrop-blur-lg flex flex-col items-center w-36 min-w-[8rem] max-w-xs animate-expand cursor-pointer"
-                style={{
-                  transform: `translateY(0)`,
-                  boxShadow: '0 8px 32px #0008',
-                  opacity: 1,
-                  transition: 'transform 0.7s cubic-bezier(.4,2,.3,1), opacity 0.5s',
-                  animationDelay: `${0.06 * i}s`,
-                }}
-              >
+              <div className="aspect-w-3 aspect-h-4 rounded-xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-shadow">
                 <img
-                  src={post.image}
-                  alt={post.title}
-                  className="w-24 h-32 object-cover mt-4 rounded-lg bg-gray-200"
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
                 />
-                <div className="flex-1 flex flex-col items-center justify-center p-2">
-                  {/* 타입/카테고리 */}
-                  <div className="text-xs font-semibold text-cyan-300 mb-1">{{
-                    posts: '개발지식',
-                    projects: '프로젝트',
-                    error: '에러모음'
-                  }[post._type] || ''}</div>
-                  <div className="text-sm font-bold text-white mb-1 truncate text-center">{post.title}</div>
-                  <div className="text-xs text-gray-300 text-center">{post.category || ''}</div>
+                <div className="absolute bottom-0 w-full p-3 backdrop-blur-md bg-black/40">
+                  <span className="text-xs text-cyan-300 uppercase">
+                    {{
+                      posts: '개발지식',
+                      projects: '프로젝트',
+                      error: '에러모음',
+                    }[item._type]}
+                  </span>
+                  <h3 className="mt-1 text-sm font-bold truncate">{item.title}</h3>
+                  <p className="text-[10px] text-gray-200 truncate">{item.category || '기본'}</p>
                 </div>
               </div>
             </Link>
           ))}
 
-          {/* 검색했지만 결과 없을 때 */}
+          {/* 검색 후 결과 없음 */}
           {searched && !loading && results.length === 0 && (
-            <div className="bg-white/10 rounded-xl shadow-xl overflow-hidden border border-white/10 backdrop-blur-lg flex flex-col items-center w-40 h-56 min-w-[8rem] max-w-xs justify-center animate-fadein"
-              style={{
-                boxShadow: '0 8px 32px #0008',
-                transition: 'width 0.7s cubic-bezier(.4,2,.3,1)',
-              }}>
-              <span className="text-gray-400 text-base opacity-80">검색 결과 없음</span>
-            </div>
+            <div className="text-gray-400 text-lg opacity-70">검색 결과가 없습니다</div>
           )}
         </div>
       </div>
-
-      {/* 애니메이션 스타일 */}
-      <style>{`
-        .card-anim-container {
-          min-height: 15rem;
-          transition: min-width 0.8s cubic-bezier(.5,2,.3,1);
-        }
-        .before-search > div {
-          transition: width 0.7s cubic-bezier(.4,2,.3,1), opacity 0.6s;
-        }
-        .search-many > div {
-          animation: fadein 0.8s cubic-bezier(.4,2,.3,1);
-        }
-        @keyframes fadein {
-          0% { opacity: 0; transform: scale(0.93); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </main>
   );
 }

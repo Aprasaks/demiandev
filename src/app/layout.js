@@ -15,7 +15,8 @@ import "../../src/styles/_keyframe-animations.scss";
 import "highlight.js/styles/github-dark.css";
 
 export default function RootLayout({ children }) {
-  const GA_ID = "G-XXXXXXXXXX"; // ← 실제 Measurement ID로 바꿔주세요
+  const GA_ID = "G-DGT55PXCEZ";
+
 
   const [showLogin, setShowLogin] = useState(false);
   const [session, setSession] = useState(null);
@@ -47,15 +48,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <head>
-        {/* Google Analytics */}
-        <Script
+      <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
           strategy="afterInteractive"
         />
+        {/* GA 초기화 */}
         <Script id="ga-init" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+            function gtag(){ dataLayer.push(arguments); }
             gtag('js', new Date());
             gtag('config', '${GA_ID}', { page_path: window.location.pathname });
           `}
