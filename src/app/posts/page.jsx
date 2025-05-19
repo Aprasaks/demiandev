@@ -105,7 +105,10 @@ export default function PostsIndexPage() {
           </button>
         </form>
 
-        <div className={`flex flex-wrap justify-center gap-8 ${getContainerClass()}`}>
+        <div
+        className={`flex flex-wrap items-end justify-center gap-8 ${getContainerClass()}`}
+        style={{ minHeight: '100px' }}  // 검색 전후에 항상 250px 높이를 확보
+        >
           {/* 검색 전 */}
           {!searched && (
             <div className="text-gray-400 text-lg opacity-70">검색어를 입력해 주세요</div>
