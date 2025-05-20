@@ -29,7 +29,8 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [allTitles, setAllTitles] = useState([]); // 모든 포스트 title/id 저장
+  const [allTitles, setAllTitles] = useState([]);
+  const [viewerKey, setViewerKey] = useState(0);
 
   // 세션 상태 관리 (Header 참고)
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function PostDetailPage() {
 
   // 단일 포스트 fetch
   useEffect(() => {
+    setLoading(true);
     (async () => {
       const { data } = await supabase
         .from('posts')
@@ -55,7 +57,7 @@ export default function PostDetailPage() {
     })();
   }, [postId]);
 
-  // 모든 포스트 title, id fetch (자동 링크용)
+  // 전체 포스트 title/id fetch (자동 링크용)
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -65,36 +67,36 @@ export default function PostDetailPage() {
     })();
   }, []);
 
-  // 코드블럭 하이라이트
+  // ToastViewer 강제 리마운트
   useEffect(() => {
-    if (!post) return;
-    setTimeout(() => {
-      document.querySelectorAll('pre code').forEach(el => {
-        hljs.highlightElement(el);
-      });
-    }, 100);
-  }, [post]);
+    setViewerKey(v => v + 1);
+  }, [postId]);
 
-  // 자동 하이라이트/링크: 모든 포스트 title이 본문 내 등장 시 자동 링크
+  // 자동 링크 및 코드블럭 하이라이트 (타이밍 완전 통일!)
   useEffect(() => {
     if (!post || !allTitles.length) return;
-    setTimeout(() => {
+    // ToastViewer의 key 변경 or postId가 바뀔 때만 딱 한 번 실행!
+    const timer = setTimeout(() => {
       document.querySelectorAll('.toastui-editor-contents').forEach(container => {
         allTitles.forEach(({ title, id }) => {
-          // 너무 짧거나 긴 제목, null, undefined는 제외
           if (!title || title.length < 2 || title.length > 32) return;
           if (title === post.title) return;
-          // 이미 링크처리된 부분 제외: 단순 정규식, 필요시 개선 가능
           const reg = new RegExp(`\\b(${escapeRegExp(title)})\\b`, 'g');
           container.innerHTML = container.innerHTML.replace(
             reg,
             (match) =>
-              `<a href="/posts/${id}" class="transition text-sky-400 font-bold underline underline-offset-2 decoration-dotted hover:text-white hover:bg-sky-700/20 rounded px-1">${match}</a>`
+              `<a href="/posts/${id}" class="my-inline-link">${match}</a>`
           );
         });
       });
-    }, 120);
-  }, [post, allTitles, postId]);
+      // 코드블럭 하이라이트
+      document.querySelectorAll('pre code').forEach(el => {
+        hljs.highlightElement(el);
+      });
+    }, 180); // 150~250 추천
+  
+    return () => clearTimeout(timer); // cleanup! 혹시 타이밍 꼬이는거 방지
+  }, [post, allTitles, viewerKey, postId]);
 
   // 정규식 특수문자 이스케이프 (title에 특수문자 포함시 대응)
   function escapeRegExp(string) {
@@ -112,7 +114,7 @@ export default function PostDetailPage() {
     const { error } = await supabase.from('posts').delete().eq('id', postId);
     if (!error) {
       alert('글이 삭제되었습니다.');
-      router.push('/'); // 삭제 후 홈으로 이동
+      router.push('/');
     } else {
       alert('삭제에 실패했습니다.');
     }
@@ -128,8 +130,7 @@ export default function PostDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
       </div>
       <div className="relative z-10 h-full overflow-auto px-4 pt-24 pb-8">
-        {/* 상세 카드 전체를 key로 감싸서 완전 리마운트 */}
-        <div key={postId} className="max-w-3xl mx-auto p-8 bg-zinc-800/90 rounded-xl shadow-lg backdrop-blur-lg">
+        <div className="max-w-3xl mx-auto p-8 bg-zinc-800/90 rounded-xl shadow-lg backdrop-blur-lg">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-bold">{post.title}</h1>
             {session && (
@@ -141,7 +142,7 @@ export default function PostDetailPage() {
             )}
           </div>
           <ToastViewer
-            key={postId}
+            key={viewerKey}
             initialValue={post.content}
             theme="dark"
             usageStatistics={false}
@@ -151,3 +152,19 @@ export default function PostDetailPage() {
     </main>
   );
 }
+
+// my-inline-link 클래스는 글로벌 CSS에 넣어줘!
+// .my-inline-link {
+//   color: #7fd1ff;
+//   font-weight: bold;
+//   text-decoration: underline dotted #7fd1ff;
+//   background: none;
+//   border-radius: 0.4em;
+//   padding: 0 0.15em;
+//   transition: background 0.2s;
+// }
+// .my-inline-link:hover {
+//   background: #244267;
+//   color: #fff;
+//   text-decoration: underline solid #fff;
+// }
