@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Particles from 'react-tsparticles';
@@ -27,7 +27,8 @@ const CATEGORY_MAP = {
   error:   ['기본'],
 };
 
-export default function WritePage() {
+// 👉 **실제 페이지 내용 컴포넌트 (useSearchParams 사용)**
+function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef();
@@ -204,5 +205,14 @@ export default function WritePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// 👉 **Suspense로 감싸서 내보내기**
+export default function WritePage() {
+  return (
+    <Suspense fallback={<div className="text-center py-32">로딩 중...</div>}>
+      <WritePageContent />
+    </Suspense>
   );
 }
