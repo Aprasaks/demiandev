@@ -5,7 +5,7 @@ export async function POST(request) {
     const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
     const msg = {
       content: `📝 [기록요청]\n'\n메시지: ${message}`,
-    };ㅎ
+    };
   
     try {
       await fetch(WEBHOOK_URL, {
