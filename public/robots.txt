@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://demian.dev
+
+# Sitemaps
+Sitemap: https://demian.dev/sitemap.xml
