@@ -13,21 +13,22 @@ import { supabase }        from '@/lib/supabaseClient';
 export default function HomePage() {
   const router = useRouter();
 
-  const sampleTitles = useMemo(() => [
-    'GraphQL 기초 이해', 'React 성능 최적화', 'Next.js ISR 완전정복',
-    'CSS 인 액션', 'TypeScript 완벽 가이드', '데이터 시각화 실전',
-    '알고리즘 탐구', '클린 코드 작성법', '디자인 패턴',
-    '우수님날씨앱 멋져요', '웹 접근성 가이드', '프로그래밍 면접 준비',
-  ], []);
+
 
   const [books, setBooks] = useState([]);
-  useEffect(() => {
-    const rnd = Array.from({ length: 12 }, (_, i) => ({
-      id: i,
-      title: sampleTitles[Math.floor(Math.random() * sampleTitles.length)],
-    }));
-    setBooks(rnd);
-  }, [sampleTitles]);
+  // Supabase에서 posts 테이블 데이터 fetch
+useEffect(() => {
+  async function fetchBooks() {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, title')
+      .order('created_at', { ascending: false })
+      .limit(12);
+    if (!error && data) setBooks(data);
+    else setBooks([]);
+  }
+  fetchBooks();
+}, []);
 
   const ringConfigs = useMemo(() => [
     { items: books, radius: 500, tilt: 0, speed: 40000, reverse: false },
