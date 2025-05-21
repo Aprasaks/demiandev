@@ -10,8 +10,11 @@ import GAProvider from '@/components/GAProvider';
 const GA_ID = "G-DGT55PXCEZ";
 
 export const metadata = {
-  title: "DEMIAN – 개발 블로그",
-  description: "당신이 원하는 기록을 검색하고 공유하세요.",
+  title: "DEMIAN – 무한한 기록",
+  icons: {
+    icon : "/favicon.svg",
+  },
+  description: "모든 기록은 전부 어딘가에 저장되어있다.",
   openGraph: {
     title: "DEMIAN – 개발 블로그",
     description: "당신이 원하는 기록을 검색하고 공유하세요.",
