@@ -12,6 +12,7 @@ import jsLang from 'highlight.js/lib/languages/javascript';
 import tsLang from 'highlight.js/lib/languages/typescript';
 import cssLang from 'highlight.js/lib/languages/css';
 import htmlLang from 'highlight.js/lib/languages/xml';
+import CommentSection from "@/components/CommentSection";
 
 hljs.registerLanguage('javascript', jsLang);
 hljs.registerLanguage('typescript', tsLang);
@@ -85,7 +86,7 @@ export default function PostDetailPage() {
           container.innerHTML = container.innerHTML.replace(
             reg,
             (match) =>
-              `<a href="/posts/${id}" class="my-inline-link">${match}</a>`
+               `<a href="/posts/${id}" class="my-inline-link">${match}</a>`
           );
         });
       });
@@ -147,24 +148,9 @@ export default function PostDetailPage() {
             theme="dark"
             usageStatistics={false}
           />
+          <CommentSection postId={post.id} />
         </div>
       </div>
     </main>
   );
 }
-
-// my-inline-link 클래스는 글로벌 CSS에 넣어줘!
-// .my-inline-link {
-//   color: #7fd1ff;
-//   font-weight: bold;
-//   text-decoration: underline dotted #7fd1ff;
-//   background: none;
-//   border-radius: 0.4em;
-//   padding: 0 0.15em;
-//   transition: background 0.2s;
-// }
-// .my-inline-link:hover {
-//   background: #244267;
-//   color: #fff;
-//   text-decoration: underline solid #fff;
-// }
