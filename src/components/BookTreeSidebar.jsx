@@ -22,9 +22,10 @@ export default function BookTreeSidebar({ categories = [], searchTerm = "" }) {
   const actuallyOpen = highlightInfo.open ?? openCategory;
 
   return (
-    <aside className="w-80 min-w-[240px] max-w-xs h-full bg-transparent px-5 py-8 border-r border-white/10 select-none">
+    <aside className="w-80 min-w-[240px] max-w-xs h-full bg-transparent ml-4 px-5 py-8 border-r border-white/10 select-none">
       <div className="font-bold text-lg mb-6 flex items-center gap-2">
-        <span role="img">📚</span> 개발 카테고리
+        {/* 이모티콘 대신 Book SVG 가능 */}
+        <span role="img" aria-label="book">📄</span> 카테고리
       </div>
       <div className="space-y-2">
         {categories.map(cat => (
@@ -32,7 +33,11 @@ export default function BookTreeSidebar({ categories = [], searchTerm = "" }) {
             <button
               className={`
                 font-semibold py-1 px-2 rounded w-full text-left
-                ${actuallyOpen === cat.category ? 'bg-blue-900/70 text-blue-300' : 'hover:bg-white/10'}
+                ${
+                  actuallyOpen === cat.category
+                    ? "bg-cyan-400/20 text-cyan-200 shadow-[0_0_10px_2px_rgba(34,211,238,0.3)] ring-1 ring-cyan-400/50"
+                    : "hover:bg-cyan-400/10 hover:text-cyan-200"
+                }
                 transition
               `}
               onClick={() => setOpenCategory(cat.category)}
@@ -43,15 +48,19 @@ export default function BookTreeSidebar({ categories = [], searchTerm = "" }) {
             <div className={`tree-children ${actuallyOpen === cat.category ? 'open' : ''} pl-4`}>
               {cat.posts.map(post => (
                 <div
-                  key={post.id}
-                  className={`
-                    py-1 px-2 rounded
-                    ${highlightInfo.highlightPostId === post.id ? 'bg-blue-600 text-white font-bold shadow-md' : 'hover:bg-white/10'}
-                    transition
-                  `}
-                >
-                  {post.title}
-                </div>
+                key={post.id}
+                className={`
+                  py-1 px-2 rounded
+                  ${
+                    highlightInfo.highlightPostId === post.id
+                      ? "bg-cyan-300/20 text-cyan-200 font-semibold shadow-[0_0_8px_0_rgba(34,211,238,0.13)] border border-cyan-200/30"
+                      : "hover:bg-cyan-400/10 hover:text-cyan-200"
+                  }
+                  transition
+                `}
+              >
+                {post.title}
+              </div>
               ))}
             </div>
           </div>

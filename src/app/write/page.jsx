@@ -22,7 +22,7 @@ const POST_TYPES = [
   { value: 'error',   label: '에러 모음 포스트' },
 ];
 const CATEGORY_MAP = {
-  dev:     ['HTML','CSS','JavaScript','React','Node.js','TypeScript','Next.js','데이터베이스','기타'],
+  dev:     ['HTML','CSS','JavaScript','React','Node','TypeScript','Next','데이터베이스','기타'],
   project: ['기본'],
   error:   ['기본'],
 };

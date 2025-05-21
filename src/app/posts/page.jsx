@@ -1,27 +1,43 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { supabase } from '@/lib/supabaseClient';
 import BookTreeSidebar from '@/components/BookTreeSidebar';
+import Link from 'next/link';
 
 export default function PostsIndexPage() {
   const [term, setTerm] = useState('');
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // BookTree 오픈 상태
   const [isBookTreeOpen, setIsBookTreeOpen] = useState(false);
-
-  // posts를 카테고리별로
   const [categories, setCategories] = useState([]);
+  const searchBoxRef = useRef(null);
+
+  // 실시간 검색 결과
+  const [results, setResults] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
+  const totalPages = Math.ceil(results.length / pageSize);
+  const pagedResults = results.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // 기록 요청 모달 관련 state
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestText, setRequestText] = useState('');
+  const [requestSent, setRequestSent] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+
+  // 파티클
+  const particlesInit = async engine => { await loadSlim(engine); };
+
+  // posts 카테고리별 fetch
   useEffect(() => {
     async function fetchPosts() {
       const { data, error } = await supabase.from('posts').select('*');
       if (error) return;
-      // 그룹핑
       const byCategory = {};
       for (const post of data) {
         const cat = post.category || '기타';
@@ -38,54 +54,49 @@ export default function PostsIndexPage() {
     fetchPosts();
   }, []);
 
-  // 검색 결과 (posts, projects, error → title만)
-  const [results, setResults] = useState([]);
-  // 페이지네이션
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 4;
-  const totalPages = Math.ceil(results.length / pageSize);
-  const pagedResults = results.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  // 기록 요청 모달 관련 state
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [requestText, setRequestText] = useState('');
-  const [requestSent, setRequestSent] = useState(false);
-  const [requestLoading, setRequestLoading] = useState(false);
-
-  const particlesInit = async engine => { await loadSlim(engine); };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    const q = term.trim();
-    if (!q) return;
-    setLoading(true);
-
-    const [devRes, projectRes, errorRes] = await Promise.all([
-      supabase.from('posts').select('*').or(`title.ilike.%${q}%`),
-      supabase.from('projects').select('*').or(`title.ilike.%${q}%`),
-      supabase.from('error').select('*').or(`title.ilike.%${q}%`),
-    ]);
-
-    if (devRes.error || projectRes.error || errorRes.error) {
+  // 실시간 검색
+  useEffect(() => {
+    // 검색어가 없으면 초기화
+    if (!term.trim()) {
       setResults([]);
-    } else {
-      const all = [
-        ...(devRes.data || []).map(item => ({ ...item, _type: 'posts' })),
-        ...(projectRes.data || []).map(item => ({ ...item, _type: 'projects' })),
-        ...(errorRes.data || []).map(item => ({ ...item, _type: 'error' })),
-      ];
-      setResults(all);
+      setSearched(false);
+      return;
     }
 
-    setSearched(true);
-    setLoading(false);
-    setCurrentPage(1);
-  };
+    let ignore = false;
+    setLoading(true);
 
-  const getContainerClass = () => {
-    if (!searched) return 'before-search';
-    return results.length > 1 ? 'search-many' : 'search-one';
-  };
+    async function doSearch() {
+      const q = term.trim();
+      const [devRes, projectRes, errorRes] = await Promise.all([
+        supabase.from('posts').select('*').or(`title.ilike.%${q}%`),
+        supabase.from('projects').select('*').or(`title.ilike.%${q}%`),
+        supabase.from('error').select('*').or(`title.ilike.%${q}%`),
+      ]);
+
+      if (!ignore) {
+        if (devRes.error || projectRes.error || errorRes.error) {
+          setResults([]);
+        } else {
+          const all = [
+            ...(devRes.data || []).map(item => ({ ...item, _type: 'posts' })),
+            ...(projectRes.data || []).map(item => ({ ...item, _type: 'projects' })),
+            ...(errorRes.data || []).map(item => ({ ...item, _type: 'error' })),
+          ];
+          setResults(all);
+        }
+        setSearched(true);
+        setLoading(false);
+        setCurrentPage(1);
+      }
+    }
+    // debounce (살짝 느리게)
+    const timeout = setTimeout(doSearch, 200);
+    return () => {
+      ignore = true;
+      clearTimeout(timeout);
+    };
+  }, [term]);
 
   // 기록 요청 처리 함수
   const handleRequestLog = async () => {
@@ -117,6 +128,9 @@ export default function PostsIndexPage() {
     }, 1800);
   };
 
+  // 카드 위치(검색창 기준)
+  // 검색창 위치가 변할 수도 있으니 left/top은 스타일로 잡음
+  // (정밀하게 맞추고 싶으면 더 보정 가능)
   return (
     <main className="relative min-h-screen bg-gray-900 text-white overflow-hidden">
       {/* 배경 + 파티클 */}
@@ -150,12 +164,13 @@ export default function PostsIndexPage() {
           />
         </div>
   
-        {/* 오른쪽: 검색창/결과 */}
-        <div className="flex-1 flex flex-col items-center justify-start pt-32 px-8">
-          {/* 검색창 */}
+        {/* 오른쪽: 검색창/카드 */}
+        <div className="flex-1 flex flex-col items-center px-8 pt-32 relative">
+          {/* 검색창 (가운데 + 아래로 내림) */}
           <form
-            onSubmit={handleSubmit}
-            className="relative w-full max-w-xl mb-12 flex justify-center"
+            ref={searchBoxRef}
+            className="relative w-full max-w-xl flex justify-center mt-28 mb-10"
+            onSubmit={e => e.preventDefault()} // enter 막기 (실시간 검색만)
           >
             <input
               type="text"
@@ -170,48 +185,85 @@ export default function PostsIndexPage() {
               type="submit"
               aria-label="검색"
               className="absolute right-5 top-1/2 -translate-y-1/2 text-white opacity-80 hover:opacity-100 transition"
+              tabIndex={-1}
             >
               <Search size={24} />
             </button>
           </form>
   
-          {/* 결과 카드/프리뷰 */}
-          <div
-            className={`flex flex-wrap items-end justify-center gap-8 w-full ${getContainerClass()}`}
-            style={{ minHeight: '100px' }}
-          >
-            {!searched && (
-              <div className="text-gray-400 text-lg opacity-70">검색어를 입력해 주세요</div>
-            )}
-            {loading && <div className="text-gray-300">검색 중...</div>}
-            {searched && !loading && pagedResults.map((item, i) => (
-              <div
-                key={`${item._type}_${item.id}`}
-                className="group block w-44 rounded-xl bg-zinc-800/80 p-4 shadow-lg hover:scale-105 transition"
+          {/* 카드 컨테이너 (검색창 바로 밑에, 가로 row, 넘치면 좌우 넘김) */}
+          {searched && !loading && results.length > 0 && (
+            <div className="relative w-full max-w-3xl flex flex-col items-center">
+              <div className="flex items-stretch justify-center gap-4 w-full">
+                {/* 왼쪽 화살표 */}
+                {totalPages > 1 && (
+                  <button
+                    className={`flex items-center px-2 text-2xl select-none transition ${currentPage === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:text-cyan-400'}`}
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(c => c - 1)}
+                    aria-label="이전"
+                    style={{ minWidth: 40 }}
+                  >
+                    ←
+                  </button>
+                )}
+                {/* 카드들 */}
+                <div className="flex flex-row gap-4 flex-1 justify-center">
+                  {pagedResults.map((item, i) => (
+                    <Link
+                    href={`/${item._type}/${item.id}`} // ← 상세 페이지 주소로!
+                    key={`${item._type}_${item.id}_${i}`}
+                    className="w-56 rounded-xl bg-zinc-800/80 p-4 shadow-lg hover:scale-[1.03] transition cursor-pointer"
+                    style={{ minWidth: 200, maxWidth: 240 }}
+                  >
+                      <span className="text-xs text-cyan-300 uppercase">
+                        {{
+                          posts: '개발지식',
+                          projects: '프로젝트',
+                          error: '에러모음',
+                        }[item._type]}
+                      </span>
+                      <h3 className="mt-2 text-sm font-bold truncate">{item.title}</h3>
+                      <p className="text-[10px] text-gray-200 truncate">{item.category || '기본'}</p>
+                    </Link>
+                  ))}
+                </div>
+                {/* 오른쪽 화살표 */}
+                {totalPages > 1 && (
+                  <button
+                    className={`flex items-center px-2 text-2xl select-none transition ${currentPage === totalPages ? 'opacity-30 cursor-not-allowed' : 'hover:text-cyan-400'}`}
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(c => c + 1)}
+                    aria-label="다음"
+                    style={{ minWidth: 40 }}
+                  >
+                    →
+                  </button>
+                )}
+              </div>
+              {/* 하단 페이지 정보 */}
+              {totalPages > 1 && (
+                <div className="text-xs text-gray-400 mt-2">{currentPage} / {totalPages}</div>
+              )}
+            </div>
+          )}
+  
+          {/* 로딩/없음 */}
+          {!searched && (
+            <div className="text-gray-400 text-lg opacity-70 mt-16">검색어를 입력해 주세요</div>
+          )}
+          {loading && <div className="text-gray-300 mt-16">검색 중...</div>}
+          {searched && !loading && results.length === 0 && (
+            <div className="flex flex-col items-center gap-4 text-gray-400 text-lg opacity-70 mt-16">
+              <div>검색 결과가 없습니다</div>
+              <button
+                className="px-5 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full shadow transition"
+                onClick={() => setShowRequestModal(true)}
               >
-                <span className="text-xs text-cyan-300 uppercase">
-                  {{
-                    posts: '개발지식',
-                    projects: '프로젝트',
-                    error: '에러모음',
-                  }[item._type]}
-                </span>
-                <h3 className="mt-2 text-sm font-bold truncate">{item.title}</h3>
-                <p className="text-[10px] text-gray-200 truncate">{item.category || '기본'}</p>
-              </div>
-            ))}
-            {searched && !loading && results.length === 0 && (
-              <div className="flex flex-col items-center gap-4 text-gray-400 text-lg opacity-70 mt-4">
-                <div>검색 결과가 없습니다</div>
-                <button
-                  className="px-5 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-full shadow transition"
-                  onClick={() => setShowRequestModal(true)}
-                >
-                  기록 요청하기
-                </button>
-              </div>
-            )}
-          </div>
+                기록 요청하기
+              </button>
+            </div>
+          )}
         </div>
       </div>
   
@@ -248,4 +300,4 @@ export default function PostsIndexPage() {
       )}
     </main>
   );
-}
+};
