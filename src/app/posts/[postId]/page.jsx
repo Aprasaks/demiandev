@@ -7,18 +7,15 @@ import { supabase } from '@/lib/supabaseClient';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/toastui-editor-viewer.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
-import hljs from 'highlight.js/lib/core';
-import jsLang from 'highlight.js/lib/languages/javascript';
-import tsLang from 'highlight.js/lib/languages/typescript';
-import cssLang from 'highlight.js/lib/languages/css';
-import htmlLang from 'highlight.js/lib/languages/xml';
+
+// ⭐️ Prism + Toast UI Code Syntax Highlight 플러그인
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css'; // 원하는 테마로 변경 가능
+
 import CommentSection from "@/components/CommentSection";
 
-hljs.registerLanguage('javascript', jsLang);
-hljs.registerLanguage('typescript', tsLang);
-hljs.registerLanguage('css', cssLang);
-hljs.registerLanguage('html', htmlLang);
-
+// Toast UI Viewer 동적 import
 const ToastViewer = dynamic(
   () => import('@toast-ui/react-editor').then(m => m.Viewer),
   { ssr: false }
@@ -56,17 +53,7 @@ export default function PostDetailPage() {
     })();
   }, [postId]);
 
-  // 코드블럭 하이라이트만 적용 (자동 링크 X)
-  useEffect(() => {
-    if (!post) return;
-    const timer = setTimeout(() => {
-      document.querySelectorAll('pre code').forEach(el => {
-        hljs.highlightElement(el);
-      });
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [post]);
+  // 👇 highlight.js 관련 코드 **삭제**
 
   // 수정 클릭 시
   const handleEdit = () => {
@@ -110,6 +97,8 @@ export default function PostDetailPage() {
             initialValue={post.content}
             theme="dark"
             usageStatistics={false}
+            // ⭐️ 코드 하이라이트 플러그인 추가!
+            plugins={[[codeSyntaxHighlight, { highlighter: Prism }]]}
           />
           <CommentSection postId={post.id} />
         </div>

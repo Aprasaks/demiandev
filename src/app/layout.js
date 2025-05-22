@@ -2,7 +2,7 @@
 import './globals.css';
 import '../../src/styles/_variables.scss';
 import '../../src/styles/_keyframe-animations.scss';
-import 'highlight.js/styles/github-dark.css';
+// import 'highlight.js/styles/github-dark.css';
 
 import Header from '@/components/Header';
 import GAProvider from '@/components/GAProvider';

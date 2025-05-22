@@ -8,6 +8,12 @@ import { loadSlim } from 'tsparticles-slim';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import '@toast-ui/editor/dist/toastui-editor-viewer.css';
+
+// ⭐️ Prism.js와 Toast UI 코드 하이라이트 플러그인 추가!
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css'; // 원하는 테마로 변경 가능
+
 import { supabase } from '@/lib/supabaseClient';
 
 // Editor만 클라이언트 전용으로 로드
@@ -27,21 +33,17 @@ const CATEGORY_MAP = {
   error:   ['기본'],
 };
 
-// 👉 **실제 페이지 내용 컴포넌트 (useSearchParams 사용)**
 function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef();
 
-  // 수정모드: ?edit=포스트ID
   const editId = searchParams.get('edit');
-
   const [type, setType] = useState('dev');
   const [category, setCategory] = useState(CATEGORY_MAP.dev[0]);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(!!editId);
 
-  // 기존 포스트 데이터 로드 (수정모드)
   useEffect(() => {
     if (!editId) return;
     setLoading(true);
@@ -59,7 +61,6 @@ function WritePageContent() {
       setType(data.type || 'dev');
       setCategory(data.category || CATEGORY_MAP[data.type || 'dev'][0]);
       setTitle(data.title || '');
-      // Editor 내용 세팅 (Toast UI는 약간의 delay 필요)
       setTimeout(() => {
         editorRef.current?.getInstance().setMarkdown(data.content || '');
       }, 100);
@@ -76,7 +77,6 @@ function WritePageContent() {
     setCategory(CATEGORY_MAP[next][0]);
   };
 
-  // 저장: 신규 or 수정
   const handleSubmit = async e => {
     e.preventDefault();
     const content = editorRef.current?.getInstance().getMarkdown() || '';
@@ -87,14 +87,12 @@ function WritePageContent() {
 
     let error;
     if (editId) {
-      // **수정 모드**
       ({ error } = await supabase
         .from('posts')
         .update({ title, content, category, type })
         .eq('id', editId)
       );
     } else {
-      // **신규 작성**
       ({ error } = await supabase
         .from('posts')
         .insert([{ title, content, category, type, created_at: new Date().toISOString() }])
@@ -169,7 +167,7 @@ function WritePageContent() {
                 maxLength={64}
               />
 
-              {/* 에디터: 코드블럭 버튼만 활성화 */}
+              {/* ⭐️ 에디터: 코드 하이라이트 플러그인 적용 */}
               <div className="mb-10 bg-white/10 rounded-xl overflow-hidden shadow-md border border-white/10">
                 <Editor
                   ref={editorRef}
@@ -188,6 +186,7 @@ function WritePageContent() {
                     ['code','codeblock'],
                     ['scrollSync'],
                   ]}
+                  plugins={[[codeSyntaxHighlight, { highlighter: Prism }]]}  // ⭐️ 여기 추가!
                 />
               </div>
 
@@ -208,7 +207,7 @@ function WritePageContent() {
   );
 }
 
-// 👉 **Suspense로 감싸서 내보내기**
+// 👉 Suspense로 감싸서 내보내기
 export default function WritePage() {
   return (
     <Suspense fallback={<div className="text-center py-32">로딩 중...</div>}>
