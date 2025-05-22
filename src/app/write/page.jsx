@@ -1,49 +1,47 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import '@toast-ui/editor/dist/toastui-editor-viewer.css';
-import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css';
+import { supabase } from '@/lib/supabaseClient';
 
-// 동적 import로 Editor만 CSR 처리
+// Editor만 클라이언트 전용으로 로드
 const Editor = dynamic(
-  () => import('@toast-ui/react-editor').then((m) => m.Editor),
+  () => import('@toast-ui/react-editor').then(m => m.Editor),
   { ssr: false }
 );
 
 const POST_TYPES = [
-  { value: 'dev', label: '개발 지식 포스트' },
+  { value: 'dev',     label: '개발 지식 포스트' },
   { value: 'project', label: '프로젝트 포스트' },
-  { value: 'error', label: '에러 모음 포스트' },
+  { value: 'error',   label: '에러 모음 포스트' },
 ];
-
 const CATEGORY_MAP = {
-  dev: ['HTML', 'CSS', 'JavaScript', 'React', 'Node', 'TypeScript', 'Next', '데이터베이스', '기타'],
+  dev:     ['HTML','CSS','JavaScript','React','Node','TypeScript','Next','데이터베이스','기타'],
   project: ['기본'],
-  error: ['기본'],
+  error:   ['기본'],
 };
 
-export default function WritePage() {
+// 👉 **실제 페이지 내용 컴포넌트 (useSearchParams 사용)**
+function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef();
 
+  // 수정모드: ?edit=포스트ID
   const editId = searchParams.get('edit');
+
   const [type, setType] = useState('dev');
   const [category, setCategory] = useState(CATEGORY_MAP.dev[0]);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(!!editId);
 
+  // 기존 포스트 데이터 로드 (수정모드)
   useEffect(() => {
     if (!editId) return;
     setLoading(true);
@@ -53,40 +51,35 @@ export default function WritePage() {
         .select('*')
         .eq('id', editId)
         .single();
-
       if (error || !data) {
         alert('글을 불러오지 못했습니다.');
         router.replace('/posts');
         return;
       }
-
       setType(data.type || 'dev');
       setCategory(data.category || CATEGORY_MAP[data.type || 'dev'][0]);
       setTitle(data.title || '');
-
+      // Editor 내용 세팅 (Toast UI는 약간의 delay 필요)
       setTimeout(() => {
         editorRef.current?.getInstance().setMarkdown(data.content || '');
       }, 100);
-
       setLoading(false);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [editId]);
 
-  const particlesInit = async (engine) => {
-    await loadSlim(engine);
-  };
+  const particlesInit = async engine => { await loadSlim(engine); };
 
-  const handleTypeChange = (e) => {
+  const handleTypeChange = e => {
     const next = e.target.value;
     setType(next);
     setCategory(CATEGORY_MAP[next][0]);
   };
 
-  const handleSubmit = async (e) => {
+  // 저장: 신규 or 수정
+  const handleSubmit = async e => {
     e.preventDefault();
     const content = editorRef.current?.getInstance().getMarkdown() || '';
-
     if (!title.trim() || !content.trim()) {
       alert('제목과 내용을 모두 입력하세요!');
       return;
@@ -94,14 +87,18 @@ export default function WritePage() {
 
     let error;
     if (editId) {
+      // **수정 모드**
       ({ error } = await supabase
         .from('posts')
         .update({ title, content, category, type })
-        .eq('id', editId));
+        .eq('id', editId)
+      );
     } else {
+      // **신규 작성**
       ({ error } = await supabase
         .from('posts')
-        .insert([{ title, content, category, type, created_at: new Date().toISOString() }]));
+        .insert([{ title, content, category, type, created_at: new Date().toISOString() }])
+      );
     }
 
     if (error) {
@@ -121,10 +118,10 @@ export default function WritePage() {
         options={{
           fpsLimit: 60,
           particles: {
-            number: { value: 50, density: { enable: true, area: 800 } },
-            size: { value: { min: 1, max: 3 } },
-            move: { enable: true, speed: 0.3, outModes: 'out' },
-            color: { value: '#ffffff40' },
+            number:  { value: 50, density: { enable: true, area: 800 } },
+            size:    { value: { min: 1, max: 3 } },
+            move:    { enable: true, speed: 0.3, outModes: 'out' },
+            color:   { value: '#ffffff40' },
             opacity: { value: { min: 0.1, max: 0.3 } },
           },
         }}
@@ -147,21 +144,17 @@ export default function WritePage() {
                   onChange={handleTypeChange}
                   className="w-1/2 px-4 py-3 rounded-lg bg-white/20 text-white focus:ring-2 focus:ring-blue-400 outline-none transition font-semibold text-base"
                 >
-                  {POST_TYPES.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                  {POST_TYPES.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={e => setCategory(e.target.value)}
                   className="w-1/2 px-4 py-3 rounded-lg bg-white/20 text-white focus:ring-2 focus:ring-blue-400 outline-none transition font-semibold text-base"
                 >
-                  {CATEGORY_MAP[type].map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
+                  {CATEGORY_MAP[type].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
@@ -170,13 +163,13 @@ export default function WritePage() {
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={e => setTitle(e.target.value)}
                 className="w-full px-6 py-4 mb-8 rounded-lg bg-white/20 placeholder-white/70 text-2xl font-semibold focus:ring-2 focus:ring-blue-400 outline-none transition"
                 placeholder="제목을 입력하세요"
                 maxLength={64}
               />
 
-              {/* 에디터 */}
+              {/* 에디터: 코드블럭 버튼만 활성화 */}
               <div className="mb-10 bg-white/10 rounded-xl overflow-hidden shadow-md border border-white/10">
                 <Editor
                   ref={editorRef}
@@ -188,14 +181,13 @@ export default function WritePage() {
                   theme="dark"
                   usageStatistics={false}
                   toolbarItems={[
-                    ['heading', 'bold', 'italic', 'strike'],
-                    ['hr', 'quote'],
-                    ['ul', 'ol', 'task', 'indent', 'outdent'],
-                    ['table', 'image', 'link'],
-                    ['code', 'codeblock'],
+                    ['heading','bold','italic','strike'],
+                    ['hr','quote'],
+                    ['ul','ol','task','indent','outdent'],
+                    ['table','image','link'],
+                    ['code','codeblock'],
                     ['scrollSync'],
                   ]}
-                  plugins={[[codeSyntaxHighlight, { highlighter: Prism }]]}
                 />
               </div>
 
@@ -213,5 +205,14 @@ export default function WritePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// 👉 **Suspense로 감싸서 내보내기**
+export default function WritePage() {
+  return (
+    <Suspense fallback={<div className="text-center py-32">로딩 중...</div>}>
+      <WritePageContent />
+    </Suspense>
   );
 }
