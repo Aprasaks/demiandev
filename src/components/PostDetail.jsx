@@ -89,7 +89,7 @@ export default function PostDetail({ postId }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
       </div>
       <div className="relative z-10 h-full overflow-auto px-4 pt-24 pb-8">
-        <div className="max-w-3xl mx-auto p-8 bg-zinc-800/90 rounded-xl shadow-lg backdrop-blur-lg">
+        <div className="max-w-3xl mx-auto p-8 bg-zinc-800/30 rounded-xl shadow-lg backdrop-blur-lg">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-bold">{post.title}</h1>
             {session && (
