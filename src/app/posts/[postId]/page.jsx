@@ -30,10 +30,8 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
-  const [allTitles, setAllTitles] = useState([]);
-  const [viewerKey, setViewerKey] = useState(0);
 
-  // 세션 상태 관리 (Header 참고)
+  // 세션 상태 관리
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -58,51 +56,17 @@ export default function PostDetailPage() {
     })();
   }, [postId]);
 
-  // 전체 포스트 title/id fetch (자동 링크용)
+  // 코드블럭 하이라이트만 적용 (자동 링크 X)
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from('posts')
-        .select('id, title');
-      setAllTitles(data || []);
-    })();
-  }, []);
-
-  // ToastViewer 강제 리마운트
-  useEffect(() => {
-    setViewerKey(v => v + 1);
-  }, [postId]);
-
-  // 자동 링크 및 코드블럭 하이라이트 (타이밍 완전 통일!)
-  useEffect(() => {
-    if (!post || !allTitles.length) return;
-    // ToastViewer의 key 변경 or postId가 바뀔 때만 딱 한 번 실행!
+    if (!post) return;
     const timer = setTimeout(() => {
-      document.querySelectorAll('.toastui-editor-contents').forEach(container => {
-        allTitles.forEach(({ title, id }) => {
-          if (!title || title.length < 2 || title.length > 32) return;
-          if (title === post.title) return;
-          const reg = new RegExp(`\\b(${escapeRegExp(title)})\\b`, 'g');
-          container.innerHTML = container.innerHTML.replace(
-            reg,
-            (match) =>
-               `<a href="/posts/${id}" class="my-inline-link">${match}</a>`
-          );
-        });
-      });
-      // 코드블럭 하이라이트
       document.querySelectorAll('pre code').forEach(el => {
         hljs.highlightElement(el);
       });
-    }, 180); // 150~250 추천
-  
-    return () => clearTimeout(timer); // cleanup! 혹시 타이밍 꼬이는거 방지
-  }, [post, allTitles, viewerKey, postId]);
+    }, 150);
 
-  // 정규식 특수문자 이스케이프 (title에 특수문자 포함시 대응)
-  function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
+    return () => clearTimeout(timer);
+  }, [post]);
 
   // 수정 클릭 시
   const handleEdit = () => {
@@ -143,7 +107,6 @@ export default function PostDetailPage() {
             )}
           </div>
           <ToastViewer
-            key={viewerKey}
             initialValue={post.content}
             theme="dark"
             usageStatistics={false}
