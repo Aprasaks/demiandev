@@ -1,7 +1,7 @@
 // src/app/write/page.jsx
 import WriteEditor from '@/components/WriteEditor';
 
-<<<<<<< HEAD
+
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
