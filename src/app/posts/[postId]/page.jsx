@@ -1,6 +1,6 @@
 // src/app/posts/[postId]/page.jsx
 
-<<<<<<< HEAD
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
