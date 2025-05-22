@@ -1,29 +1,27 @@
-// src/app/posts/[postId]/page.jsx
+// src/components/PostDetail.jsx
 
-<<<<<<< HEAD
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/toastui-editor-viewer.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 
-// ⭐️ Prism + Toast UI Code Syntax Highlight 플러그인
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight';
 import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css'; // 원하는 테마로 변경 가능
+import 'prismjs/themes/prism-tomorrow.css';
 
 import CommentSection from "@/components/CommentSection";
 
-// Toast UI Viewer 동적 import
 const ToastViewer = dynamic(
   () => import('@toast-ui/react-editor').then(m => m.Viewer),
   { ssr: false }
 );
 
-export default function PostDetailPage() {
-  const { postId } = useParams();
+export default function PostDetail({ postId }) {
   const router = useRouter();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,8 +52,6 @@ export default function PostDetailPage() {
     })();
   }, [postId]);
 
-  // 👇 highlight.js 관련 코드 **삭제**
-
   // 수정 클릭 시
   const handleEdit = () => {
     router.push(`/write?edit=${postId}`);
@@ -73,7 +69,17 @@ export default function PostDetailPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-16">로딩 중…</div>;
+  if (loading) return (
+    <main className="relative h-screen bg-gray-900 text-white">
+      <div className="fixed inset-0">
+        <div className="w-full h-full bg-cover bg-center filter blur-sm scale-110" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
+      </div>
+      <div className="relative z-10 flex justify-center items-center h-full">
+        <div className="text-2xl opacity-70">로딩 중…</div>
+      </div>
+    </main>
+  );
   if (!post)   return <div className="text-center py-16">글을 찾을 수 없습니다.</div>;
 
   return (
@@ -98,7 +104,6 @@ export default function PostDetailPage() {
             initialValue={post.content}
             theme="dark"
             usageStatistics={false}
-            // ⭐️ 코드 하이라이트 플러그인 추가!
             plugins={[[codeSyntaxHighlight, { highlighter: Prism }]]}
           />
           <CommentSection postId={post.id} />
@@ -106,10 +111,4 @@ export default function PostDetailPage() {
       </div>
     </main>
   );
-
-import PostDetail from '@/components/PostDetail';
-
-export default function PostDetailPage({ params }) {
-  // params.postId가 자동으로 전달됨
-  return <PostDetail postId={params.postId} />;
 }

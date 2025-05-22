@@ -1,24 +1,20 @@
-// src/app/write/page.jsx
-import WriteEditor from '@/components/WriteEditor';
+'use client';
 
-<<<<<<< HEAD
-import React, { useState, useRef, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import '@toast-ui/editor/dist/toastui-editor-viewer.css';
-
-// ⭐️ Prism.js와 Toast UI 코드 하이라이트 플러그인 추가!
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight';
 import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css'; // 원하는 테마로 변경 가능
+import 'prismjs/themes/prism-tomorrow.css';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
-// Editor만 클라이언트 전용으로 로드
+// Editor만 동적 import (CSR)
 const Editor = dynamic(
   () => import('@toast-ui/react-editor').then(m => m.Editor),
   { ssr: false }
@@ -35,7 +31,7 @@ const CATEGORY_MAP = {
   error:   ['기본'],
 };
 
-function WritePageContent() {
+export default function WriteEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editorRef = useRef();
@@ -188,7 +184,7 @@ function WritePageContent() {
                     ['code','codeblock'],
                     ['scrollSync'],
                   ]}
-                  plugins={[[codeSyntaxHighlight, { highlighter: Prism }]]}  // ⭐️ 여기 추가!
+                  plugins={[[codeSyntaxHighlight, { highlighter: Prism }]]}
                 />
               </div>
 
@@ -207,9 +203,4 @@ function WritePageContent() {
       </div>
     </main>
   );
-}
-
-
-export default function WritePage() {
-  return <WriteEditor />;
 }

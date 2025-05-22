@@ -1,3 +1,4 @@
+// src/app/posts/page.jsx
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
