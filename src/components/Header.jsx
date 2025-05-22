@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/lib/supabaseClient";
+import WriteButton from "./WriteButton"; 
 
 export default function Header() {
   const [showLogin, setShowLogin] = useState(false);
@@ -45,22 +46,16 @@ export default function Header() {
   return (
     <>
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between h-16 px-16 bg-transparent backdrop-blur-sm">
-        {/* 중앙 로고 */}
-        <Link
-          href="/"
-          className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-aggro hover:opacity-80 transition-opacity"
-        >
-          DEMIAN
-        </Link>
-        <div className="flex items-center space-x-4">
+  <div style={{ width: 160 }} /> {/* 왼쪽 더미 */}
+  <Link
+    href="/"
+    className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-aggro hover:opacity-80 transition-opacity"
+  >
+    DEMIAN
+  </Link>
+        <div className="flex items-center justify-end space-x-4">
           {session && (
-            <button
-              onClick={handleWriteClick}
-              className="px-4 py-2 rounded-full bg-sky-500 hover:bg-sky-400 text-white font-bold transition"
-              style={{ fontSize: "1rem" }}
-            >
-              글쓰기
-            </button>
+            <WriteButton />
           )}
           {session ? (
             <>
